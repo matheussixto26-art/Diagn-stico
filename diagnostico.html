@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Diagnóstico de Tarefas</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; background-color: #1e1e1e; color: #d4d4d4; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; background-color: #3c3c3c; border: 1px solid #555; color: #d4d4d4; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #0e639c; border: none; color: white; cursor: pointer; border-radius: 4px; }
+        button:disabled { background-color: #555; }
+        #log-output { margin-top: 20px; background-color: #252526; border: 1px solid #555; padding: 15px; white-space: pre-wrap; word-wrap: break-word; min-height: 300px; border-radius: 4px; }
+        .log-entry { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #555; }
+        .log-title { color: #4ec9b0; font-weight: bold; }
+        .log-error { color: #f44747; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Painel de Diagnóstico de Tarefas</h1>
+        <div class="form-group">
+            <label for="ra">RA (com dígito e UF):</label>
+            <input type="text" id="ra" placeholder="Ex: 123456789sp">
+        </div>
+        <div class="form-group">
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha">
+        </div>
+        <div class="form-group">
+            <label for="taskId">ID da Tarefa:</label>
+            <input type="text" id="taskId" placeholder="Cole aqui o ID da tarefa a ser feita">
+        </div>
+        <div class="form-group">
+            <label for="room">Room (ou publication_target):</label>
+            <input type="text" id="room" placeholder="Cole aqui o 'room' da tarefa">
+        </div>
+        <button id="start-button">Iniciar Processo de Diagnóstico</button>
+        
+        <h2>Log de Execução em Tempo Real:</h2>
+        <div id="log-output"></div>
+    </div>
+
+    <script>
+        const raInput = document.getElementById('ra');
+        const senhaInput = document.getElementById('senha');
+        const taskIdInput = document.getElementById('taskId');
+        const roomInput = document.getElementById('room');
+        const startButton = document.getElementById('startButton');
+        const logOutput = document.getElementById('log-output');
+
+        function logToPage(title, data, isError = false) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const titleEl = document.createElement('div');
+            titleEl.className = isError ? 'log-error log-title' : 'log-title';
+            titleEl.textContent = `[${new Date().toLocaleTimeString()}] ${title}`;
+            entry.appendChild(titleEl);
+
+            if (data) {
+                const dataEl = document.createElement('pre');
+                dataEl.textContent = JSON.stringify(data, null, 2);
+                entry.appendChild(dataEl);
+            }
+            logOutput.prepend(entry);
+        }
+
+        async function startProcess() {
+            startButton.disabled = true;
+            logOutput.innerHTML = ''; // Limpa o log anterior
+
+            const credentials = { user: raInput.value, senha: senhaInput.value };
+            const taskId = parseInt(taskIdInput.value);
+            const room = roomInput.value;
+
+            try {
+                // ETAPA 1: Login para obter o tokenB
+                logToPage("1. A tentar fazer login...", credentials.user);
+                const loginResponse = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+                const loginData = await loginResponse.json();
+                if (!loginResponse.ok) throw new Error(loginData.error);
+                const tokenB = loginData.tokenB;
+                logToPage("1. Login bem-sucedido! Token B obtido.", { tokenB: tokenB.substring(0, 30) + '...' });
+
+                // ETAPA 2: Obter o gabarito (respostas)
+                const getAnswersPayload = { taskId, tokenB, room };
+                logToPage("2. A pedir o GABARITO (previewTask)...", getAnswersPayload);
+                const answersResponse = await fetch('/api/get-answers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(getAnswersPayload)
+                });
+                const answersData = await answersResponse.json();
+                if (!answersResponse.ok) throw new Error(answersData.error);
+                logToPage("2. GABARITO recebido com sucesso!", answersData);
+
+                // ETAPA 3: Preparar e submeter a tarefa
+                const submitPayload = {
+                    type: "submit",
+                    taskId: taskId,
+                    token: tokenB,
+                    tipo: "Pendente", // Podemos ajustar isto se necessário
+                    tempo: 120, // Tempo fixo para o teste
+                    status: "submitted",
+                    accessed_on: "room",
+                    executed_on: room,
+                    answers: answersData.answers
+                };
+                logToPage("3. A SUBMETER a tarefa com o gabarito...", submitPayload);
+                const submitResponse = await fetch('/api/submit-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submitPayload)
+                });
+                const submitData = await submitResponse.json();
+                if (!submitResponse.ok) throw new Error(submitData.error);
+                logToPage("3. Resposta final da SUBMISSÃO!", submitData);
+
+                logToPage("PROCESSO DE DIAGNÓSTICO CONCLUÍDO!");
+
+            } catch (error) {
+                logToPage("!!! ERRO CRÍTICO NO PROCESSO !!!", { message: error.message }, true);
+            } finally {
+                startButton.disabled = false;
+            }
+        }
+
+        startButton.addEventListener('click', startProcess);
+    </script>
+</body>
+</html>
