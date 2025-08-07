@@ -1,11 +1,13 @@
 const axios = require('axios');
 
-async function fetchApiData(requestConfig) {
+async function fetchApiData(requestConfig) { // O nome correto é 'requestConfig'
     try {
-        const response = await axios(request_config);
+        // CORREÇÃO: Usar a variável correta 'requestConfig'
+        const response = await axios(requestConfig); 
         return response.data;
     } catch (error) {
-        console.error(`Falha controlada em: ${request_config.url}. Status: ${error.response?.status}. Detalhes: ${error.message}`);
+        // CORREÇÃO: Usar a variável correta 'requestConfig'
+        console.error(`Falha controlada em: ${requestConfig.url}. Status: ${error.response?.status}. Detalhes: ${error.message}`);
         return null; // Retorna nulo para não quebrar o Promise.all
     }
 }
@@ -38,36 +40,24 @@ module.exports = async (req, res) => {
             publicationTargetsQuery = [...new Set(targets)].map(target => `publication_target[]=${encodeURIComponent(target)}`).join('&');
         }
         
-        // ***** MUDANÇA PRINCIPAL AQUI *****
-        // Preparamos as duas URLs de busca de tarefas: uma para pendentes, outra para expiradas.
         const baseTaskUrl = `https://edusp-api.ip.tv/tms/task/todo?limit=100&with_answer=true&${publicationTargetsQuery}`;
-        
-        // URL 1: Busca tarefas pendentes e rascunhos
         const pendingTasksUrl = `${baseTaskUrl}&expired_only=false&answer_statuses=pending&answer_statuses=draft`;
-        console.log("Buscando tarefas PENDENTES com a URL:", pendingTasksUrl);
-
-        // URL 2: Busca tarefas expiradas (imitando os parâmetros que capturaste)
         const expiredTasksUrl = `${baseTaskUrl}&expired_only=true&answer_statuses=pending&answer_statuses=draft`;
-        console.log("Buscando tarefas EXPIRADAS com a URL:", expiredTasksUrl);
         
         const [raNumber, raDigit, raUf] = user.match(/^(\d+)(\d)(\w+)$/).slice(1);
         const requests = [
              fetchApiData({ method: 'get', url: `https://sedintegracoes.educacao.sp.gov.br/apiboletim/api/Frequencia/GetFaltasBimestreAtual?codigoAluno=${userInfo.CD_USUARIO}`, headers: { "Authorization": `Bearer ${tokenA}`, "Ocp-Apim-Subscription-Key": "a84380a41b144e0fa3d86cbc25027fe6" } }),
              fetchApiData({ method: 'get', url: pendingTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
-             fetchApiData({ method: 'get', url: expiredTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }), // <-- Nova chamada
+             fetchApiData({ method: 'get', url: expiredTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
              fetchApiData({ method: 'get', url: `https://sedintegracoes.educacao.sp.gov.br/apisalaconquistas/api/salaConquista/conquistaAluno?CodigoAluno=${userInfo.CD_USUARIO}`, headers: { "Authorization": `Bearer ${tokenA}`, "Ocp-Apim-Subscription-Key": "008ada07395f4045bc6e795d63718090" } }),
              fetchApiData({ method: 'get', url: `https://sedintegracoes.educacao.sp.gov.br/cmspwebservice/api/sala-do-futuro-alunos/consulta-notificacao?userId=${userInfo.CD_USUARIO}`, headers: { "Authorization": `Bearer ${tokenA}`, "Ocp-Apim-Subscription-Key": "1a758fd2f6be41448079c9616a861b91" } }),
              fetchApiData({ method: 'get', url: `https://sedintegracoes.educacao.sp.gov.br/alunoapi/api/Aluno/ExibirAluno?inNumRA=${raNumber}&inDigitoRA=${raDigit}&inSiglaUFRA=${raUf}`, headers: { "Authorization": `Bearer ${tokenA}`, "Ocp-Apim-Subscription-Key": "b141f65a88354e078a9d4fdb1df29867" } })
         ];
 
-        // Agora recebemos mais um resultado no array: `expiredTasks`
         const [faltasData, pendingTasks, expiredTasks, conquistas, notificacoes, dadosAluno] = await Promise.all(requests);
         console.log("Fase 3: Dados em paralelo concluídos.");
 
-        // Juntamos os dois arrays de tarefas
         const allTasksRaw = (Array.isArray(pendingTasks) ? pendingTasks : []).concat(Array.isArray(expiredTasks) ? expiredTasks : []);
-        
-        // Removemos duplicados, caso a API retorne a mesma tarefa em ambas as chamadas
         const allTasks = [...new Map(allTasksRaw.map(task => [task.id, task])).values()];
         console.log(`Tarefas encontradas: ${pendingTasks?.length || 0} pendentes, ${expiredTasks?.length || 0} expiradas. Total após junção: ${allTasks.length}`);
         
@@ -83,4 +73,4 @@ module.exports = async (req, res) => {
         res.status(500).json({ error: 'Ocorreu um erro fatal no servidor ao processar o login.', details: error.message });
     }
 };
-                           
+            
