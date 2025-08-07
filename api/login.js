@@ -12,7 +12,10 @@ async function fetchApiData(requestConfig) {
 
 // Função para classificar o tipo de atividade
 function classifyTask(task) {
-    const title = task.title.toLowerCase();
+    // ***** CORREÇÃO AQUI *****
+    // Adicionamos '|| ""' para garantir que, se o título não existir, usamos um texto vazio
+    // Isto evita o erro quando tentamos usar .toLowerCase() em algo que não é um texto.
+    const title = (task.title || '').toLowerCase();
     const tags = task.tags || [];
 
     if (tags.includes('redacaopaulista') || title.includes('redação')) {
@@ -50,7 +53,6 @@ module.exports = async (req, res) => {
         const pendingTasksUrl = `${baseTaskUrl}&expired_only=false&answer_statuses=pending&answer_statuses=draft`;
         const expiredTasksUrl = `${baseTaskUrl}&expired_only=true&answer_statuses=pending&answer_statuses=draft`;
         
-        const [raNumber, raDigit, raUf] = user.match(/^(\d+)(\d)(\w+)$/).slice(1);
         const requests = [
              fetchApiData({ method: 'get', url: pendingTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
              fetchApiData({ method: 'get', url: expiredTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
@@ -60,7 +62,6 @@ module.exports = async (req, res) => {
         const allTasksRaw = (Array.isArray(pendingTasks) ? pendingTasks : []).concat(Array.isArray(expiredTasks) ? expiredTasks : []);
         const allTasksUnique = [...new Map(allTasksRaw.map(task => [task.id, task])).values()];
         
-        // Classifica cada tarefa e adiciona o tipo
         const classifiedTasks = allTasksUnique.map(task => ({
             ...task,
             type: classifyTask(task)
@@ -73,4 +74,4 @@ module.exports = async (req, res) => {
         res.status(500).json({ error: 'Ocorreu um erro fatal no servidor ao processar o login.', details: error.message });
     }
 };
-            
+    
