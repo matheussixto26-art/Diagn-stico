@@ -3,467 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assistente de Tarefas</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+    <title>Finituss | Automatizador Sala do Futuro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Importando uma fonte para deixar mais agradável */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-        /* Estilos Gerais */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding-top: 20px;
-        }
-
-        #container {
-            width: 100%;
-            max-width: 800px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 24px;
-        }
-
-        header {
-            text-align: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 16px;
-            margin-bottom: 24px;
-        }
-
-        header h1 {
-            color: #4a4a4a;
-        }
-
-        header i {
-            color: #6a11cb;
-        }
-
-        /* Estilos da Lista de Tarefas */
-        #lista-tarefas {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .tarefa {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .tarefa:hover {
-            border-color: #6a11cb;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .tarefa-info h3 {
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tipo-tarefa {
-            font-size: 0.9em;
-            color: #777;
-        }
-
-        .tempo-restante {
-            font-weight: 600;
-            color: #333;
-            margin-top: 8px;
-        }
-
-        .tempo-expirado {
-            color: #d93025;
-            font-weight: bold;
-        }
-
-        /* Etiquetas de Status */
-        .status {
-            font-size: 0.75em;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            color: #fff;
-        }
-        .status-pendente { background-color: #ff9800; }
-        .status-rascunho { background-color: #2196f3; }
-        .status-concluida { background-color: #4caf50; }
-        .status-expirada { background-color: #d93025; }
-        .status-resolvendo { background-color: #6a11cb; animation: pulse 1.5s infinite; }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-
-
-        /* Botão e Ação */
-        .btn-fazer {
-            padding: 10px 16px;
-            border: none;
-            background-color: #6a11cb;
-            color: #fff;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-fazer:hover {
-            background-color: #5a0eae;
-        }
-
-        /* Barra de Progresso e Animação */
-        .progresso-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            margin-top: 8px;
-        }
-        .barra-progresso {
-            width: 0%; /* Começa em 0 */
-            height: 10px;
-            background-color: #4caf50;
-            border-radius: 4px;
-            transition: width 0.5s ease-out;
-        }
-        .galinha-falando {
-            font-style: normal;
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 8px;
-        }
-
-
-        /* Estilos do Modal */
-        .modal-oculto {
-            display: none !important; /* Usamos !important para garantir que vai esconder */
-        }
-        #modal-nota {
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-conteudo {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
-        }
-        .modal-fechar {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        #seletor-nota, #btn-confirmar-nota {
-            width: 100%;
-            padding: 12px;
-            margin-top: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 1em;
-        }
-        #btn-confirmar-nota {
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        #btn-confirmar-nota:hover {
-            background-color: #45a049;
-        }
+        :root { --background-color: #4b365e; --container-color: #5f4575; --input-bg-color: #4b365e; --text-color: #f0e6f2; --placeholder-color: #bca9c5; --accent-color: #e886a3; --border-color: #7c619c; --green-color: #23d183; --red-color: #e53965; --orange-color: #f77829; --blue-color: #388bfd;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--background-color); background-image: url('https://www.transparenttextures.com/patterns/spooky.png'); color: var(--text-color); font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        .login-container { background-color: var(--container-color); padding: 40px 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .login-container h1 { font-size: 4em; color: var(--text-color); font-weight: 700; }
+        .login-container .subtitle { font-size: 1rem; color: var(--placeholder-color); margin-bottom: 30px; }
+        .input-wrapper { position: relative; margin-bottom: 20px; }
+        .input-wrapper label { display: block; text-align: left; margin-bottom: 8px; font-weight: 500; }
+        .input-wrapper input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg-color); color: var(--text-color); font-size: 1rem; }
+        .input-wrapper .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--placeholder-color); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; margin-top: 10px; }
+        .btn-primary { background-color: var(--accent-color); border: 1px solid #d16d8a; }
+        .btn-primary:hover { background-color: #d16d8a; }
+        .btn-secondary { background-color: var(--container-color); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #71538a; }
+        .btn:disabled { background-color: #555 !important; border-color: #555 !important; cursor: not-allowed; }
+        #login-message { margin-top: 20px; min-height: 20px; color: var(--red-color); font-weight: 500; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.is-visible { opacity: 1; pointer-events: all; }
+        .modal-content { background-color: var(--container-color); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid var(--border-color); display: flex; flex-direction: column;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 2em; }
+        .modal-close { background: rgba(0,0,0,0.2); border: none; color: var(--text-color); font-size: 1.2em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; text-align: center; }
+        .activity-list { list-style: none; margin-bottom: 20px; flex-grow: 1; overflow-y: auto;}
+        .activity-item { background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
+        .activity-item input[type="checkbox"] { display: none; }
+        .activity-item label { cursor: pointer; display: flex; align-items: center; width: 100%; }
+        .custom-checkbox { width: 20px; height: 20px; background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; margin-right: 15px; display: inline-block; position: relative; flex-shrink: 0; }
+        .activity-item input[type="checkbox"]:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
+        .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
+        .activity-item input[type="checkbox"]:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
+        .task-title { flex-grow: 1; margin-right: 10px; }
+        .tag { padding: 3px 8px; border-radius: 10px; font-size: 0.75em; margin-left: 5px; flex-shrink: 0; font-weight: 600; }
+        .tag.expirada { background-color: var(--orange-color); color: white; }
+        .tag.rascunho { background-color: var(--blue-color); color: white; }
+        .config-section, .automation-status { margin-top: 15px; }
+        .config-section h3 { font-size: 1.5em; margin-bottom: 15px; }
+        .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .config-group input, .config-group select { width: 80px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
+        .config-group select { width: 120px; text-align: left; }
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .progress-bar-container { width: 100%; background-color: var(--input-bg-color); border-radius: 10px; padding: 3px; }
+        .progress-bar { width: 0%; height: 20px; background-color: var(--green-color); border-radius: 7px; transition: width 0.5s ease; text-align: center; line-height: 20px; font-weight: 600; }
+        #status-text { margin-top: 10px; font-weight: 500; min-height: 20px; }
     </style>
-    </head>
+</head>
 <body>
-
-    <div id="container">
-        <header>
-            <h1><i class="fa-solid fa-robot"></i> Seu Parceiro de Programação</h1>
-            <p>Gerencie e automatize suas tarefas escolares.</p>
-        </header>
-
-        <main>
-            <section id="lista-tarefas">
-                </section>
-        </main>
-    </div>
-
-    <div id="modal-nota" class="modal-oculto">
-        <div class="modal-conteudo">
-            <span class="modal-fechar">&times;</span>
-            <h2>Definir Nota da Tarefa</h2>
-            <p id="modal-titulo-tarefa">Título da Tarefa Aqui</p>
-            <p>Esta tarefa vale <strong id="modal-nota-maxima">40</strong> pontos.</p>
-            <label for="seletor-nota">Qual nota você deseja tirar?</label>
-            <select id="seletor-nota">
-                </select>
-            <button id="btn-confirmar-nota">Confirmar e Fazer Tarefa</button>
+    <main id="login-screen">
+        <div class="login-container"><h1>Finituss</h1><p class="subtitle">para sala do futuro e cmsp!</p>
+            <form id="login-form">
+                <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp | ex: 123456789sp" required></div>
+                <div class="input-wrapper"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
+                <button type="button" id="btn-tarefas" class="btn btn-secondary">Tarefas</button>
+                <button type="button" id="btn-provas" class="btn btn-secondary" disabled>Provas (Em Breve)</button>
+                <button type="button" id="btn-redacoes" class="btn btn-secondary" disabled>Redações (Em Breve)</button>
+            </form>
+            <div id="login-message"></div>
+        </div>
+    </main>
+    <div id="selection-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="modal-title">Selecionar</h2><button class="modal-close">&times;</button></div>
+            <ul class="activity-list" id="activity-list-container"><li class="activity-item"><input type="checkbox" id="select-all"><label for="select-all"><span class="custom-checkbox"></span>Selecionar Todas</label></li></ul>
+            <div id="automation-controls">
+                <div class="config-section">
+                    <h3>Configurações</h3>
+                    <div class="config-group"><label for="target-score">Pontuação Desejada</label>
+                        <select id="target-score">
+                            <option value="1">100% (Gabarito)</option>
+                            <option value="0.75">75%</option>
+                            <option value="0.5">50%</option>
+                            <option value="0.25">25%</option>
+                            <option value="0">0% (Errar Tudo)</option>
+                        </select>
+                    </div>
+                    <div class="config-group"><label for="min-time">Tempo Mínimo (segundos)</label><input type="number" id="min-time" value="90" min="1"></div>
+                    <div class="config-group"><label for="max-time">Tempo Máximo (segundos)</label><input type="number" id="max-time" value="300" max="3600"></div>
+                </div>
+                <div class="action-buttons">
+                     <button id="btn-start-automation" class="btn btn-primary">Fazer Selecionadas</button>
+                     <button id="btn-save-draft" class="btn btn-secondary">Salvar como Rascunho</button>
+                </div>
+            </div>
+            <div id="automation-status-container" class="hidden">
+                <h3>Progresso da Automação</h3>
+                <div class="progress-bar-container"><div id="progress-bar" class="progress-bar">0%</div></div>
+                <div id="status-text">Aguardando início...</div>
+            </div>
         </div>
     </div>
+    <div id="loading-overlay" class="hidden"><h2 style="color:white; font-size: 1.5em;">Aguarde...</h2></div>
+        <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const appState = { data: null, tokenB: null };
+        const ui = { 
+            raInput: document.getElementById('ra'), senhaInput: document.getElementById('senha'), 
+            togglePassword: document.querySelector('.toggle-password'), loginMessage: document.getElementById('login-message'), 
+            btnTarefas: document.getElementById('btn-tarefas'), btnProvas: document.getElementById('btn-provas'), btnRedacoes: document.getElementById('btn-redacoes'),
+            loadingOverlay: document.getElementById('loading-overlay'), selectionModal: document.getElementById('selection-modal'), 
+            modalTitle: document.getElementById('modal-title'), activityListContainer: document.getElementById('activity-list-container'), 
+            selectAllCheckbox: document.getElementById('select-all'), modalCloseBtn: document.querySelector('.modal-close'), 
+            minTimeInput: document.getElementById('min-time'), maxTimeInput: document.getElementById('max-time'), 
+            targetScoreSelect: document.getElementById('target-score'),
+            btnStartAutomation: document.getElementById('btn-start-automation'), btnSaveDraft: document.getElementById('btn-save-draft'),
+            automationControls: document.getElementById('automation-controls'),
+            automationStatusContainer: document.getElementById('automation-status-container'),
+            progressBar: document.getElementById('progress-bar'),
+            statusText: document.getElementById('status-text')
+        };
+        
+        const showLoading = (show) => ui.loadingOverlay.classList.toggle('hidden', !show);
+        const showModal = (show) => ui.selectionModal.classList.toggle('is-visible', show);
 
+        const updateTaskStatus = (htmlId, message, color) => {
+            const label = document.querySelector(`label[for="${htmlId}"]`);
+            if (!label) return;
+            let statusSpan = label.querySelector('.status-span');
+            if (!statusSpan) {
+                statusSpan = document.createElement('span'); statusSpan.className = 'status-span';
+                statusSpan.style.marginLeft = 'auto'; statusSpan.style.fontWeight = '500';
+                label.appendChild(statusSpan);
+            }
+            statusSpan.textContent = message; statusSpan.style.color = color;
+        };
+        
+        const handleLoginAndShowModal = async (activityType) => {
+            ui.loginMessage.textContent = ''; showLoading(true);
+            try {
+                const credentials = { user: ui.raInput.value, senha: ui.senhaInput.value };
+                const loginResponse = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) });
+                const loginData = await loginResponse.json();
+                if (!loginResponse.ok) throw new Error(loginData.error || 'Falha no Login');
+                appState.data = loginData; appState.tokenB = loginData.tokenB;
+                populateSelectionModal(activityType); 
+                showModal(true);
+            } catch (error) { ui.loginMessage.textContent = `❌ ${error.message}`;
+            } finally { showLoading(false); }
+        };
 
-    <script>
-        // Espera todo o HTML ser carregado para começar a executar o script
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // 1. NOSSO BANCO DE DADOS E SELETORES DE ELEMENTOS HTML
-            let bancoDeDadosDeTarefas = [
-                {
-                    id: 1,
-                    titulo: "Exercício de Matemática",
-                    tipo: "tarefa",
-                    status: "rascunho", // Pode ser 'rascunho', 'pendente', 'resolvendo', 'concluida', 'expirada'
-                    perguntas: ["2+2", "10*5", "30/3", "4^2"],
-                    notaMaxima: 40,
-                    dataEntrega: "2025-08-10T23:59:00" // Formato: ANO-MES-DIAThoras:minutos:segundos
-                },
-                {
-                    id: 2,
-                    titulo: "Prova Mensal de Biologia",
-                    tipo: "prova",
-                    status: "pendente",
-                    perguntas: ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"],
-                    notaMaxima: 100,
-                    dataEntrega: "2025-08-08T18:00:00"
-                },
-                {
-                    id: 3,
-                    titulo: "Redação sobre IA",
-                    tipo: "redacao",
-                    status: "pendente",
-                    perguntas: ["Tema: O futuro da Inteligência Artificial"],
-                    notaMaxima: 100,
-                    dataEntrega: "2025-09-01T23:59:00"
-                },
-                {
-                    id: 4,
-                    titulo: "Trabalho de História Antiga",
-                    tipo: "tarefa",
-                    status: "pendente",
-                    perguntas: ["P1", "P2", "P3"],
-                    notaMaxima: 30,
-                    dataEntrega: "2025-08-07T20:00:00" // Expirou às 20h de hoje
-                }
-            ];
-
-            const listaTarefasContainer = document.getElementById('lista-tarefas');
-            const modal = document.getElementById('modal-nota');
-            const modalTitulo = document.getElementById('modal-titulo-tarefa');
-            const modalNotaMaxima = document.getElementById('modal-nota-maxima');
-            const seletorNota = document.getElementById('seletor-nota');
-            const btnConfirmarNota = document.getElementById('btn-confirmar-nota');
-            const btnFecharModal = document.querySelector('.modal-fechar');
+        const populateSelectionModal = (activityType) => {
+            const titleMap = { task: 'Tarefas', exam: 'Provas', essay: 'Redações' };
+            ui.modalTitle.textContent = titleMap[activityType];
             
-            let tarefaAtualId = null;
+            const items = ui.activityListContainer.querySelectorAll('.activity-item:not(:first-child)');
+            items.forEach(item => item.remove());
+            
+            const tasksToDisplay = appState.data.tarefas?.filter(t => t.type === activityType && t.answer_status !== 'submitted');
 
-            // 2. FUNÇÕES PRINCIPAIS DA APLICAÇÃO
-            const renderizarTarefas = () => {
-                listaTarefasContainer.innerHTML = ''; 
-
-                bancoDeDadosDeTarefas.forEach(tarefa => {
-                    const tarefaDiv = document.createElement('div');
-                    tarefaDiv.className = 'tarefa';
-                    tarefaDiv.setAttribute('data-id', tarefa.id);
-
-                    // Verifica o status para aplicar o estilo correto
-                    let statusClass = `status-${tarefa.status}`;
-                    let statusText = tarefa.status.charAt(0).toUpperCase() + tarefa.status.slice(1);
-                    if (tarefa.status === 'rascunho') statusText = 'Em Rascunho';
-
-                    let conteudoInterno = `
-                        <div class="tarefa-info">
-                            <h3>
-                                ${tarefa.titulo} 
-                                <span class="status ${statusClass}">${statusText}</span>
-                            </h3>
-                            <p class="tipo-tarefa">Tipo: ${tarefa.tipo}</p>
-                            <p class="tempo-restante" id="tempo-${tarefa.id}">Calculando tempo...</p>
-                            <div id="progresso-${tarefa.id}"></div>
-                        </div>
-                        <div class="tarefa-acao">
-                            <button class="btn-fazer" data-id="${tarefa.id}">
-                                ${tarefa.status === 'rascunho' ? 'Refazer Tarefa' : 'Fazer Tarefa'}
-                            </button>
-                        </div>
-                    `;
+            if (tasksToDisplay && tasksToDisplay.length > 0) {
+                tasksToDisplay.forEach(task => {
+                    const listItem = document.createElement('li'); listItem.className = 'activity-item';
+                    const htmlId = `task-${task.id}`;
                     
-                    if (tarefa.status === 'concluida' || tarefa.status === 'expirada' || tarefa.status === 'resolvendo') {
-                        conteudoInterno = `
-                        <div class="tarefa-info">
-                            <h3>
-                                ${tarefa.titulo} 
-                                <span class="status ${statusClass}">${statusText}</span>
-                            </h3>
-                            <p class="tipo-tarefa">Tipo: ${tarefa.tipo}</p>
-                            <p class="tempo-restante" id="tempo-${tarefa.id}">-</p>
-                            <div id="progresso-${tarefa.id}"></div>
-                        </div>
-                        `;
-                    }
-
-                    tarefaDiv.innerHTML = conteudoInterno;
-                    listaTarefasContainer.appendChild(tarefaDiv);
+                    let tags = '';
+                    if (task.task_expired) tags += '<span class="tag expirada">EXPIRADA</span>';
+                    if (task.answer_status === 'draft') tags += '<span class="tag rascunho">RASCUNHO</span>';
+                    
+                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><span class="task-title">${task.title}</span>${tags}</label>`;
+                    ui.activityListContainer.appendChild(listItem);
                 });
-                
-                adicionarEventListenersAosBotoes();
-            };
-            
-            const adicionarEventListenersAosBotoes = () => {
-                document.querySelectorAll('.btn-fazer').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const id = e.target.getAttribute('data-id');
-                        abrirModalNota(id);
-                    });
+            } else {
+                 const noItem = document.createElement('li'); noItem.className = 'activity-item';
+                 noItem.innerHTML = `<p>Nenhuma atividade do tipo '${titleMap[activityType]}' encontrada.</p>`;
+                 ui.activityListContainer.appendChild(noItem);
+            }
+            ui.automationControls.classList.remove('hidden');
+            ui.automationStatusContainer.classList.add('hidden');
+        };
+        
+        // NOVA LÓGICA DE PONTUAÇÃO
+        function modifyAnswersForTargetScore(answers, targetScoreRatio) {
+            if (targetScoreRatio >= 1) return answers; // 100%, não faz nada
+            if (targetScoreRatio <= 0) { // 0%, erra tudo
+                Object.values(answers).forEach(q => {
+                    if (q.question_type === 'single' || q.question_type === 'true-false') {
+                        Object.keys(q.answer).forEach(key => { q.answer[key] = !q.answer[key]; });
+                    } else { q.answer = ["errado"]; }
                 });
-            };
+                return answers;
+            }
+            const questions = Object.values(answers);
+            const totalQuestions = questions.length;
+            const questionsToGetRight = Math.round(totalQuestions * targetScoreRatio);
+            const questionsToGetWrong = totalQuestions - questionsToGetRight;
 
-            const abrirModalNota = (id) => {
-                tarefaAtualId = parseInt(id);
-                const tarefa = bancoDeDadosDeTarefas.find(t => t.id === tarefaAtualId);
-                
-                modal.style.display = "flex"; // Mostra o modal
-                modalTitulo.textContent = tarefa.titulo;
-                modalNotaMaxima.textContent = tarefa.notaMaxima;
-                
-                seletorNota.innerHTML = '';
-                for(let i = 10; i <= tarefa.notaMaxima; i += 10) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = `Tirar ${i} de ${tarefa.notaMaxima}`;
-                    seletorNota.appendChild(option);
-                }
-                if (tarefa.notaMaxima % 10 !== 0) { // Garante que a nota máxima seja sempre uma opção
-                    const optionMax = document.createElement('option');
-                    optionMax.value = tarefa.notaMaxima;
-                    optionMax.textContent = `Tirar ${tarefa.notaMaxima} de ${tarefa.notaMaxima} (100%)`;
-                    seletorNota.appendChild(optionMax);
-                }
-                
-                modal.classList.remove('modal-oculto');
-            };
-
-            const fecharModal = () => {
-                modal.classList.add('modal-oculto');
-            };
-            
-            const iniciarResolucaoTarefa = () => {
-                const notaDesejada = parseInt(seletorNota.value);
-                const tarefa = bancoDeDadosDeTarefas.find(t => t.id === tarefaAtualId);
-
-                if (!tarefa) return;
-
-                fecharModal();
-
-                tarefa.status = 'resolvendo';
-                renderizarTarefas();
-
-                const progressoDiv = document.getElementById(`progresso-${tarefa.id}`);
-                progressoDiv.innerHTML = `
-                    <div class="galinha-falando">
-                        <i class="fa-solid fa-egg fa-spin"></i> Respondendo...
-                    </div>
-                    <div class="progresso-container">
-                        <div class="barra-progresso" id="barra-${tarefa.id}"></div>
-                    </div>
-                `;
-                const barraProgresso = document.getElementById(`barra-${tarefa.id}`);
-
-                let progresso = 0;
-                const tempoSimulacao = 2000 + Math.random() * 3000;
-
-                const intervalo = setInterval(() => {
-                    progresso += 10;
-                    barraProgresso.style.width = progresso + '%';
-                    
-                    if (progresso >= 100) {
-                        clearInterval(intervalo);
-                        tarefa.status = 'concluida';
-                        console.log(`Tarefa ${tarefa.id} concluída com a nota desejada de ${notaDesejada}.`);
-                        renderizarTarefas();
-                    }
-                }, tempoSimulacao / 10);
-            };
-
-            const atualizarTempos = () => {
-                const agora = new Date();
-
-                bancoDeDadosDeTarefas.forEach(tarefa => {
-                    const elementoTempo = document.getElementById(`tempo-${tarefa.id}`);
-                    if (!elementoTempo) return;
-
-                    const dataEntrega = new Date(tarefa.dataEntrega);
-                    const diff = dataEntrega - agora;
-
-                    if (tarefa.status === 'concluida' || tarefa.status === 'resolvendo') {
-                        elementoTempo.textContent = 'Finalizada';
-                        return;
-                    }
-                    
-                    if (diff > 0) {
-                        const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                        const minutos = Math.floor((diff / 1000 / 60) % 60);
-                        const segundos = Math.floor((diff / 1000) % 60);
-                        elementoTempo.textContent = `Tempo restante: ${dias}d ${horas}h ${minutos}m ${segundos}s`;
-                        elementoTempo.classList.remove('tempo-expirado');
-                    } else {
-                        elementoTempo.textContent = "TAREFA EXPIRADA";
-                        elementoTempo.classList.add('tempo-expirado');
-                        if (tarefa.status !== 'concluida') {
-                            tarefa.status = 'expirada';
+            for (let i = 0; i < questionsToGetWrong; i++) {
+                const q = questions[i]; // Erra as primeiras N questões
+                if (q.question_type === 'single' || q.question_type === 'true-false') {
+                     const keys = Object.keys(q.answer);
+                     if (keys.length > 1) { // Garante que há uma opção para trocar
+                        let firstTrue = keys.find(k => q.answer[k] === true);
+                        if (firstTrue) {
+                           q.answer[firstTrue] = false;
+                           let firstFalse = keys.find(k => k !== firstTrue);
+                           q.answer[firstFalse] = true;
                         }
-                    }
-                });
-            };
+                     }
+                } else { q.answer = ["errado"]; }
+            }
+            return answers;
+        }
 
-            // 3. INICIALIZAÇÃO E EVENTOS GLOBAIS
-            btnFecharModal.addEventListener('click', fecharModal);
-            btnConfirmarNota.addEventListener('click', iniciarResolucaoTarefa);
+        const handleAutomation = async (submissionStatus = 'submitted') => {
+            const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
+            if (selectedCheckboxes.length === 0) { alert('Por favor, selecione pelo menos uma atividade.'); return; }
             
-            renderizarTarefas();
-            setInterval(() => {
-                atualizarTempos();
-                // Re-renderizar se algum status mudou para 'expirada'
-                const algumaExpirou = bancoDeDadosDeTarefas.some(t => t.status === 'expirada' && !document.querySelector(`.tarefa[data-id='${t.id}'] .status-expirada`));
-                if (algumaExpirou) {
-                    renderizarTarefas();
-                }
-            }, 1000);
-        });
+            ui.automationControls.classList.add('hidden');
+            ui.automationStatusContainer.classList.remove('hidden');
+
+            const minSeconds = parseFloat(ui.minTimeInput.value) || 1;
+            const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
+            const targetScoreRatio = parseFloat(ui.targetScoreSelect.value);
+            
+            let tasksCompleted = 0;
+            const totalTasks = selectedCheckboxes.length;
+            
+            for (const checkbox of selectedCheckboxes) {
+                const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
+                const taskData = appState.data.tarefas.find(t => t.id == taskId);
+                
+                tasksCompleted++;
+                const progress = Math.round((tasksCompleted / totalTasks) * 100);
+                ui.progressBar.style.width = `${progress}%`;
+                ui.progressBar.textContent = `${progress}%`;
+
+                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); continue; }
+                try {
+                    ui.statusText.textContent = `(${tasksCompleted}/${totalTasks}) Obtendo gabarito para: ${taskData.title}`;
+                    const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
+                    const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
+                    const answersData = await answersResponse.json();
+                    if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
+                    
+                    const modifiedAnswers = modifyAnswersForTargetScore(answersData.answers, targetScoreRatio);
+                    
+                    ui.statusText.textContent = `(${tasksCompleted}/${totalTasks}) Enviando respostas para: ${taskData.title}`;
+                    const officialPayload = { status: submissionStatus, answers: modifiedAnswers, accessed_on: "room", executed_on: taskData.publication_target, duration: (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2) };
+                    const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
+                    const submitData = await submitResponse.json();
+                    if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
+                    
+                    const scoreInfo = submitData.result_score !== undefined ? `Nota: ${submitData.result_score}` : '';
+                    const finalStatus = submitData.status === 'finished' ? `Finalizado! ${scoreInfo} ✔️` : (submitData.status === 'draft' ? 'Rascunho Salvo! ✔️' : `Status: ${submitData.status}`);
+                    updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
+
+                } catch (error) { updateTaskStatus(htmlId, `Erro`, 'var(--red-color)'); ui.statusText.textContent = `Erro em ${taskData.title}: ${error.message}`; }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            ui.statusText.textContent = 'Processo finalizado!';
+        };
+
+        ui.btnTarefas.addEventListener('click', () => handleLoginAndShowModal('task'));
+        ui.togglePassword.addEventListener('click', () => { const icon = ui.togglePassword.querySelector('i'); if (ui.senhaInput.type === 'password') { ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } else { ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); } });
+        ui.modalCloseBtn.addEventListener('click', () => showModal(false));
+        ui.selectionModal.addEventListener('click', (e) => { if (e.target === ui.selectionModal) showModal(false); });
+        ui.selectAllCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked); });
+        ui.btnStartAutomation.addEventListener('click', () => handleAutomation('submitted'));
+        ui.btnSaveDraft.addEventListener('click', () => handleAutomation('draft'));
+    });
     </script>
-    </body>
+</body>
 </html>
