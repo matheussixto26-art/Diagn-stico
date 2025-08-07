@@ -23,7 +23,7 @@
         .btn-primary:hover { background-color: #d16d8a; }
         .btn-secondary { background-color: var(--container-color); border: 1px solid var(--border-color); }
         .btn-secondary:hover { background-color: #71538a; }
-        .btn:disabled { background-color: #555 !important; border-color: #555 !important; cursor: not-allowed; }
+        .btn:disabled { background-color: #555 !important; border-color: #555 !important; cursor: not-allowed; opacity: 0.6; }
         #login-message { margin-top: 20px; min-height: 20px; color: var(--red-color); font-weight: 500; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.is-visible { opacity: 1; pointer-events: all; }
@@ -31,7 +31,7 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h2 { font-size: 2em; }
         .modal-close { background: rgba(0,0,0,0.2); border: none; color: var(--text-color); font-size: 1.2em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; text-align: center; }
-        .activity-list { list-style: none; margin-bottom: 20px; flex-grow: 1; overflow-y: auto;}
+        .activity-list { list-style: none; margin-bottom: 20px; flex-grow: 1; overflow-y: auto; min-height: 100px;}
         .activity-item { background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
         .activity-item input[type="checkbox"] { display: none; }
         .activity-item label { cursor: pointer; display: flex; align-items: center; width: 100%; }
@@ -39,8 +39,11 @@
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
         .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
-        .task-title { flex-grow: 1; margin-right: 10px; }
-        .tag { padding: 3px 8px; border-radius: 10px; font-size: 0.75em; margin-left: 5px; flex-shrink: 0; font-weight: 600; }
+        /* --- CSS CORRIGIDO AQUI --- */
+        .task-content { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+        .task-title { font-weight: 500; }
+        .task-tags { display: flex; margin-top: 5px; }
+        .tag { padding: 3px 8px; border-radius: 10px; font-size: 0.75em; margin-right: 5px; flex-shrink: 0; font-weight: 600; }
         .tag.expirada { background-color: var(--orange-color); color: white; }
         .tag.rascunho { background-color: var(--blue-color); color: white; }
         .config-section, .automation-status { margin-top: 15px; }
@@ -129,7 +132,8 @@
             if (!statusSpan) {
                 statusSpan = document.createElement('span'); statusSpan.className = 'status-span';
                 statusSpan.style.marginLeft = 'auto'; statusSpan.style.fontWeight = '500';
-                label.appendChild(statusSpan);
+                const contentWrapper = label.querySelector('.task-content');
+                if (contentWrapper) contentWrapper.appendChild(statusSpan);
             }
             statusSpan.textContent = message; statusSpan.style.color = color;
         };
@@ -166,7 +170,17 @@
                     if (task.task_expired) tags += '<span class="tag expirada">EXPIRADA</span>';
                     if (task.answer_status === 'draft') tags += '<span class="tag rascunho">RASCUNHO</span>';
                     
-                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><span class="task-title">${task.title}</span>${tags}</label>`;
+                    // ***** MUDANÇA PRINCIPAL AQUI *****
+                    // Envolve o título e as tags num novo container para corrigir o bug de layout
+                    listItem.innerHTML = `
+                        <input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}">
+                        <label for="${htmlId}">
+                            <span class="custom-checkbox"></span>
+                            <div class="task-content">
+                                <span class="task-title">${task.title}</span>
+                                <div class="task-tags">${tags}</div>
+                            </div>
+                        </label>`;
                     ui.activityListContainer.appendChild(listItem);
                 });
             } else {
@@ -178,35 +192,34 @@
             ui.automationStatusContainer.classList.add('hidden');
         };
         
-        // NOVA LÓGICA DE PONTUAÇÃO
         function modifyAnswersForTargetScore(answers, targetScoreRatio) {
-            if (targetScoreRatio >= 1) return answers; // 100%, não faz nada
-            if (targetScoreRatio <= 0) { // 0%, erra tudo
-                Object.values(answers).forEach(q => {
-                    if (q.question_type === 'single' || q.question_type === 'true-false') {
-                        Object.keys(q.answer).forEach(key => { q.answer[key] = !q.answer[key]; });
-                    } else { q.answer = ["errado"]; }
-                });
-                return answers;
-            }
+            if (targetScoreRatio >= 1) return answers;
             const questions = Object.values(answers);
             const totalQuestions = questions.length;
-            const questionsToGetRight = Math.round(totalQuestions * targetScoreRatio);
-            const questionsToGetWrong = totalQuestions - questionsToGetRight;
+            if (totalQuestions === 0) return answers;
 
-            for (let i = 0; i < questionsToGetWrong; i++) {
-                const q = questions[i]; // Erra as primeiras N questões
+            const questionsToGetRight = Math.round(totalQuestions * targetScoreRatio);
+            
+            // Embaralha as questões para errar aleatoriamente
+            questions.sort(() => 0.5 - Math.random());
+            
+            for (let i = 0; i < (totalQuestions - questionsToGetRight); i++) {
+                const q = questions[i];
                 if (q.question_type === 'single' || q.question_type === 'true-false') {
                      const keys = Object.keys(q.answer);
-                     if (keys.length > 1) { // Garante que há uma opção para trocar
-                        let firstTrue = keys.find(k => q.answer[k] === true);
-                        if (firstTrue) {
-                           q.answer[firstTrue] = false;
-                           let firstFalse = keys.find(k => k !== firstTrue);
-                           q.answer[firstFalse] = true;
+                     if (keys.length > 1) {
+                        let firstTrueKey = keys.find(k => q.answer[k] === true);
+                        let firstFalseKey = keys.find(k => q.answer[k] === false);
+                        if(firstTrueKey && firstFalseKey) {
+                           q.answer[firstTrueKey] = false;
+                           q.answer[firstFalseKey] = true;
+                        } else if (firstTrueKey) { // Caso só haja uma resposta (ex: true/false com uma opção)
+                           q.answer[firstTrueKey] = false;
                         }
+                     } else if (keys.length === 1){
+                         q.answer[keys[0]] = !q.answer[keys[0]];
                      }
-                } else { q.answer = ["errado"]; }
+                } else { q.answer = ["resposta", "errada"]; }
             }
             return answers;
         }
@@ -217,6 +230,8 @@
             
             ui.automationControls.classList.add('hidden');
             ui.automationStatusContainer.classList.remove('hidden');
+            ui.progressBar.style.width = `0%`;
+            ui.progressBar.textContent = `0%`;
 
             const minSeconds = parseFloat(ui.minTimeInput.value) || 1;
             const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
@@ -228,23 +243,18 @@
             for (const checkbox of selectedCheckboxes) {
                 const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
                 const taskData = appState.data.tarefas.find(t => t.id == taskId);
-                
-                tasksCompleted++;
-                const progress = Math.round((tasksCompleted / totalTasks) * 100);
-                ui.progressBar.style.width = `${progress}%`;
-                ui.progressBar.textContent = `${progress}%`;
 
-                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); continue; }
+                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); tasksCompleted++; continue; }
                 try {
-                    ui.statusText.textContent = `(${tasksCompleted}/${totalTasks}) Obtendo gabarito para: ${taskData.title}`;
+                    ui.statusText.textContent = `(${tasksCompleted + 1}/${totalTasks}) Obtendo gabarito para: ${taskData.title.substring(0, 30)}...`;
                     const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
                     const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
                     const answersData = await answersResponse.json();
                     if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
                     
-                    const modifiedAnswers = modifyAnswersForTargetScore(answersData.answers, targetScoreRatio);
+                    const modifiedAnswers = modifyAnswersForTargetScore(JSON.parse(JSON.stringify(answersData.answers)), targetScoreRatio);
                     
-                    ui.statusText.textContent = `(${tasksCompleted}/${totalTasks}) Enviando respostas para: ${taskData.title}`;
+                    ui.statusText.textContent = `(${tasksCompleted + 1}/${totalTasks}) Enviando respostas para: ${taskData.title.substring(0, 30)}...`;
                     const officialPayload = { status: submissionStatus, answers: modifiedAnswers, accessed_on: "room", executed_on: taskData.publication_target, duration: (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2) };
                     const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
                     const submitData = await submitResponse.json();
@@ -255,6 +265,11 @@
                     updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
 
                 } catch (error) { updateTaskStatus(htmlId, `Erro`, 'var(--red-color)'); ui.statusText.textContent = `Erro em ${taskData.title}: ${error.message}`; }
+                
+                tasksCompleted++;
+                const progress = Math.round((tasksCompleted / totalTasks) * 100);
+                ui.progressBar.style.width = `${progress}%`;
+                ui.progressBar.textContent = `${progress}%`;
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
             ui.statusText.textContent = 'Processo finalizado!';
