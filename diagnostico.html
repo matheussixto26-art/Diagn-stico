@@ -2,143 +2,193 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Diagnóstico de Tarefas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finituss | Automatizador Sala do Futuro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Courier New', Courier, monospace; background-color: #1e1e1e; color: #d4d4d4; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #4ec9b0; }
-        input { width: 100%; padding: 8px; background-color: #3c3c3c; border: 1px solid #555; color: #d4d4d4; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px 15px; background-color: #0e639c; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 1rem; margin-top: 5px; }
-        button:disabled { background-color: #555; }
-        #log-output { margin-top: 20px; background-color: #252526; border: 1px solid #555; padding: 15px; white-space: pre-wrap; word-wrap: break-word; min-height: 200px; max-height: 400px; overflow-y: auto; border-radius: 4px; }
-        .log-entry { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #555; }
-        .log-title { color: #4ec9b0; font-weight: bold; }
-        .log-error { color: #f44747; }
-        #task-list-container { border: 1px solid #555; padding: 10px; border-radius: 4px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
-        .task-item { padding: 10px; border-bottom: 1px solid #3c3c3c; cursor: pointer; }
-        .task-item:hover { background-color: #3c3c3c; }
-        .task-item.selected { background-color: #0e639c; font-weight: bold; }
-        .task-item:last-child { border-bottom: none; }
-        .step-divider { margin: 20px 0; border-top: 2px solid #4ec9b0; }
+        :root { --background-color: #4b365e; --container-color: #5f4575; --input-bg-color: #4b365e; --text-color: #f0e6f2; --placeholder-color: #bca9c5; --accent-color: #e886a3; --border-color: #7c619c; --green-color: #23d183; --red-color: #e53965; --orange-color: #f77829;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--background-color); background-image: url('https://www.transparenttextures.com/patterns/spooky.png'); color: var(--text-color); font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        .login-container { background-color: var(--container-color); padding: 40px 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .login-container h1 { font-size: 4em; color: var(--text-color); font-weight: 700; }
+        .login-container .subtitle { font-size: 1rem; color: var(--placeholder-color); margin-bottom: 30px; }
+        .input-wrapper { position: relative; margin-bottom: 20px; }
+        .input-wrapper label { display: block; text-align: left; margin-bottom: 8px; font-weight: 500; }
+        .input-wrapper input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg-color); color: var(--text-color); font-size: 1rem; }
+        .input-wrapper input::placeholder { color: var(--placeholder-color); }
+        .input-wrapper .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--placeholder-color); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; margin-top: 10px; }
+        .btn-primary { background-color: var(--accent-color); border: 1px solid #d16d8a; }
+        .btn-primary:hover { background-color: #d16d8a; box-shadow: 0 0 15px rgba(232, 134, 163, 0.5); }
+        .btn-secondary { background-color: var(--container-color); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #71538a; }
+        .btn:disabled { background-color: #555 !important; border-color: #555 !important; cursor: not-allowed; }
+        #login-message { margin-top: 20px; min-height: 20px; color: var(--red-color); font-weight: 500; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.is-visible { opacity: 1; pointer-events: all; }
+        .modal-content { background-color: var(--container-color); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid var(--border-color); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 2em; }
+        .modal-close { background: rgba(0,0,0,0.2); border: none; color: var(--text-color); font-size: 1.2em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; text-align: center; }
+        .activity-list { list-style: none; margin-bottom: 20px; }
+        .activity-item { background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
+        .activity-item input[type="checkbox"] { display: none; }
+        .activity-item label { cursor: pointer; display: flex; align-items: center; width: 100%; }
+        .custom-checkbox { width: 20px; height: 20px; background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; margin-right: 15px; display: inline-block; position: relative; flex-shrink: 0; }
+        .activity-item input[type="checkbox"]:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
+        .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
+        .activity-item input[type="checkbox"]:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
+        .task-title { flex-grow: 1; }
+        .tag { background-color: var(--bg-dark); color: var(--text-secondary); padding: 3px 8px; border-radius: 5px; font-size: 0.8em; margin-left: 10px; flex-shrink: 0;}
+        .tag.expirada { background-color: var(--orange-color); color: white; }
+        .config-section { margin-top: 25px; }
+        .config-section h3 { font-size: 1.5em; margin-bottom: 15px; }
+        .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .config-group input[type="number"] { width: 80px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Painel de Diagnóstico de Tarefas</h1>
-        <label>Passo 1: Login</label>
-        <div class="form-group"><input type="text" id="ra" placeholder="RA (com dígito e UF)"></div>
-        <div class="form-group"><input type="password" id="senha" placeholder="Senha"></div>
-        <button id="fetch-tasks-button">Buscar Tarefas Pendentes</button>
-        <div id="task-list-container" style="display: none;">
-            <label>Passo 2: Selecione uma Tarefa da Lista</label>
-            <div id="task-list"></div>
+    <main id="login-screen">
+        <div class="login-container"><h1>Finituss</h1><p class="subtitle">para sala do futuro e cmsp!</p>
+            <form id="login-form">
+                <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp | ex: 123456789sp" required></div>
+                <div class="input-wrapper"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
+                <button type="button" id="btn-atividades" class="btn btn-secondary">Atividades Pendentes</button>
+                <button type="button" id="btn-provas" class="btn btn-secondary">Provas Pendentes</button>
+            </form>
+            <div id="login-message"></div>
         </div>
-        <div class="step-divider"></div>
-        <label>Passo 3: Iniciar Diagnóstico para a Tarefa Selecionada</label>
-        <div class="form-group"><input type="text" id="taskId" placeholder="ID da Tarefa (preenchido automaticamente)" readonly></div>
-        <div class="form-group"><input type="text" id="room" placeholder="Room da Tarefa (preenchido automaticamente)" readonly></div>
-        <button id="start-button" disabled>Iniciar Processo de Diagnóstico</button>
-        <h2>Log de Execução em Tempo Real:</h2>
-        <div id="log-output"></div>
+    </main>
+    <div id="selection-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="modal-title">Selecionar Atividades</h2><button class="modal-close">&times;</button></div>
+            <ul class="activity-list" id="activity-list-container"><li class="activity-item"><input type="checkbox" id="select-all"><label for="select-all"><span class="custom-checkbox"></span>Selecionar Todas as Atividades</label></li></ul>
+            <div class="config-section">
+                <h3>Configurações de Tempo</h3>
+                <div class="config-group"><label for="min-time">Tempo Mínimo (segundos)</label><input type="number" id="min-time" value="90" min="1"></div>
+                <div class="config-group"><label for="max-time">Tempo Máximo (segundos)</label><input type="number" id="max-time" value="300" max="3600"></div>
+            </div>
+            <div class="action-buttons">
+                 <button id="btn-start-automation" class="btn btn-primary">Fazer Atividades Selecionadas</button>
+                 <button id="btn-save-draft" class="btn btn-secondary">Salvar como Rascunho</button>
+            </div>
+        </div>
     </div>
+    <div id="loading-overlay" class="hidden"><h2 style="color:white; font-size: 1.5em;">Aguarde...</h2></div>
 
     <script>
-        const ui = { raInput: document.getElementById('ra'), senhaInput: document.getElementById('senha'), taskIdInput: document.getElementById('taskId'), roomInput: document.getElementById('room'), startButton: document.getElementById('start-button'), fetchTasksButton: document.getElementById('fetch-tasks-button'), logOutput: document.getElementById('log-output'), taskListContainer: document.getElementById('task-list-container'), taskList: document.getElementById('task-list') };
-        const appState = { loginData: null, selectedTask: null };
+    document.addEventListener('DOMContentLoaded', () => {
+        const appState = { data: null, tokenB: null };
+        const ui = { raInput: document.getElementById('ra'), senhaInput: document.getElementById('senha'), togglePassword: document.querySelector('.toggle-password'), loginMessage: document.getElementById('login-message'), btnAtividades: document.getElementById('btn-atividades'), btnProvas: document.getElementById('btn-provas'), loadingOverlay: document.getElementById('loading-overlay'), selectionModal: document.getElementById('selection-modal'), modalTitle: document.getElementById('modal-title'), activityListContainer: document.getElementById('activity-list-container'), selectAllCheckbox: document.getElementById('select-all'), modalCloseBtn: document.querySelector('.modal-close'), minTimeInput: document.getElementById('min-time'), maxTimeInput: document.getElementById('max-time'), btnStartAutomation: document.getElementById('btn-start-automation'), btnSaveDraft: document.getElementById('btn-save-draft') };
+        
+        const showLoading = (show) => ui.loadingOverlay.classList.toggle('hidden', !show);
+        const showModal = (show) => ui.selectionModal.classList.toggle('is-visible', show);
 
-        function logToPage(title, data, isError = false) {
-            const entry = document.createElement('div'); entry.className = 'log-entry';
-            const titleEl = document.createElement('div'); titleEl.className = isError ? 'log-error log-title' : 'log-title';
-            titleEl.textContent = `[${new Date().toLocaleTimeString('pt-BR')}] ${title}`;
-            entry.appendChild(titleEl);
-            if (data) {
-                const dataEl = document.createElement('pre'); dataEl.textContent = JSON.stringify(data, null, 2);
-                entry.appendChild(dataEl);
+        const updateTaskStatus = (htmlId, message, color) => {
+            const label = document.querySelector(`label[for="${htmlId}"]`);
+            if (!label) return;
+            let statusSpan = label.querySelector('.status-span');
+            if (!statusSpan) {
+                statusSpan = document.createElement('span'); statusSpan.className = 'status-span';
+                statusSpan.style.marginLeft = 'auto'; statusSpan.style.fontWeight = '500';
+                label.appendChild(statusSpan);
             }
-            ui.logOutput.prepend(entry);
-        }
-
-        async function fetchAndDisplayTasks() {
-            ui.fetchTasksButton.disabled = true; ui.fetchTasksButton.textContent = 'A buscar...';
-            logToPage("Buscando tarefas pendentes...");
+            statusSpan.textContent = message; statusSpan.style.color = color;
+        };
+        
+        const handleLoginAndShowModal = async (type) => {
+            ui.loginMessage.textContent = ''; showLoading(true);
             try {
                 const credentials = { user: ui.raInput.value, senha: ui.senhaInput.value };
                 const loginResponse = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) });
                 const loginData = await loginResponse.json();
                 if (!loginResponse.ok) throw new Error(loginData.error || 'Falha no Login');
-                appState.loginData = loginData;
-                logToPage("Login bem-sucedido. A processar lista de tarefas...");
-                ui.taskList.innerHTML = '';
-                const pendingTasks = loginData.tarefas?.filter(t => t.answer_status !== 'submitted');
-                if (pendingTasks && pendingTasks.length > 0) {
-                    pendingTasks.forEach(task => {
-                        const taskElement = document.createElement('div'); taskElement.className = 'task-item';
-                        taskElement.textContent = `[ID: ${task.id}] - ${task.title}`;
-                        taskElement.dataset.taskId = task.id;
-                        taskElement.addEventListener('click', () => selectTask(task));
-                        ui.taskList.appendChild(taskElement);
-                    });
-                    ui.taskListContainer.style.display = 'block';
-                    logToPage(`${pendingTasks.length} tarefas encontradas. Selecione uma da lista acima.`);
-                } else { logToPage("Nenhuma tarefa pendente encontrada."); }
-            } catch (error) { logToPage("!!! ERRO AO BUSCAR TAREFAS !!!", { message: error.message }, true);
-            } finally { ui.fetchTasksButton.disabled = false; ui.fetchTasksButton.textContent = 'Buscar Tarefas Pendentes'; }
-        }
+                appState.data = loginData; appState.tokenB = loginData.tokenB;
+                populateSelectionModal(type); showModal(true);
+            } catch (error) { ui.loginMessage.textContent = `❌ ${error.message}`;
+            } finally { showLoading(false); }
+        };
 
-        function selectTask(task) {
-            appState.selectedTask = task; ui.taskIdInput.value = task.id; ui.roomInput.value = task.publication_target;
-            ui.startButton.disabled = false;
-            document.querySelectorAll('.task-item').forEach(el => el.classList.remove('selected'));
-            document.querySelector(`.task-item[data-task-id='${task.id}']`).classList.add('selected');
-            logToPage(`Tarefa selecionada: ${task.title}`);
-        }
-
-        async function startDiagnosticProcess() {
-            ui.startButton.disabled = true; ui.logOutput.innerHTML = '';
-            const { selectedTask, loginData } = appState;
-            if (!selectedTask || !loginData) { logToPage("ERRO: Nenhuma tarefa selecionada ou login não efetuado.", null, true); ui.startButton.disabled = false; return; }
-
-            try {
-                const tokenB = loginData.tokenB;
-                logToPage("Iniciando diagnóstico para a tarefa:", selectedTask.title);
-
-                const getAnswersPayload = { taskId: selectedTask.id, tokenB, room: selectedTask.publication_target };
-                logToPage("1. A pedir o GABARITO (via 'get-answers')...", getAnswersPayload);
-                const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
-                const answersData = await answersResponse.json();
-                if (!answersResponse.ok) throw new Error(answersData.error);
-                logToPage("1. GABARITO recebido com sucesso!", answersData);
-
-                // ***** MUDANÇA PRINCIPAL AQUI *****
-                // Montamos o payload no formato OFICIAL que descobrimos
-                const officialPayload = {
-                    status: "submitted", // ou "draft" se quiséssemos salvar como rascunho
-                    answers: answersData.answers,
-                    accessed_on: "room",
-                    executed_on: selectedTask.publication_target,
-                    duration: (Math.random() * (240 - 90) + 90).toFixed(2) // Simula um tempo entre 90 e 240 segundos
-                };
-
-                logToPage("2. A SUBMETER TAREFA (via nosso 'submit-task' para a API oficial)...", officialPayload);
-                const submitResponse = await fetch('/api/submit-task', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    // Enviamos o payload oficial para a nossa API intermediária
-                    body: JSON.stringify({ taskId: selectedTask.id, tokenB, payload: officialPayload })
+        const populateSelectionModal = (type) => {
+            ui.modalTitle.textContent = `Selecionar ${type}`;
+            const items = ui.activityListContainer.querySelectorAll('.activity-item:not(:first-child)');
+            items.forEach(item => item.remove());
+            const pendingTasks = appState.data.tarefas?.filter(t => t.answer_status !== 'submitted');
+            if (pendingTasks && pendingTasks.length > 0) {
+                pendingTasks.forEach(task => {
+                    const listItem = document.createElement('li'); listItem.className = 'activity-item';
+                    const htmlId = `task-${task.id}`;
+                    // Adiciona a tag de expirada se for o caso
+                    const expiredTag = task.task_expired ? '<span class="tag expirada">EXPIRADA</span>' : '';
+                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><span class="task-title">${task.title}</span>${expiredTag}</label>`;
+                    ui.activityListContainer.appendChild(listItem);
                 });
+            } else {
+                 const noItem = document.createElement('li'); noItem.className = 'activity-item';
+                 noItem.innerHTML = `<p>Nenhuma ${type.toLowerCase()} encontrada.</p>`;
+                 ui.activityListContainer.appendChild(noItem);
+            }
+        };
 
-                const submitData = await submitResponse.json();
-                if (!submitResponse.ok) throw new Error(submitData.error || JSON.stringify(submitData.details));
-                logToPage("2. Resposta final da API OFICIAL!", submitData);
-                logToPage("PROCESSO DE DIAGNÓSTICO CONCLUÍDO!");
+        const handleAutomation = async (submissionStatus = 'submitted') => {
+            const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
+            if (selectedCheckboxes.length === 0) { alert('Por favor, selecione pelo menos uma atividade.'); return; }
+            ui.btnStartAutomation.disabled = true; ui.btnSaveDraft.disabled = true;
+            const originalButtonText = (submissionStatus === 'submitted') ? 'Fazer Atividades Selecionadas' : 'Salvar como Rascunho';
+            const buttonToUpdate = (submissionStatus === 'submitted') ? ui.btnStartAutomation : ui.btnSaveDraft;
+            buttonToUpdate.textContent = 'A processar...';
 
-            } catch (error) { logToPage("!!! ERRO CRÍTICO NO PROCESSO !!!", { message: error.message }, true);
-            } finally { /* Botão fica desativado para nova seleção */ }
-        }
+            const minSeconds = parseFloat(ui.minTimeInput.value) || 1;
+            const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
+            
+            for (const checkbox of selectedCheckboxes) {
+                const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
+                const taskData = appState.data.tarefas.find(t => t.id == taskId);
+                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); continue; }
+                try {
+                    updateTaskStatus(htmlId, '1/2: Obtendo gabarito...', 'var(--placeholder-color)');
+                    const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
+                    const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
+                    const answersData = await answersResponse.json();
+                    if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
+                    updateTaskStatus(htmlId, '2/2: Enviando respostas...', 'var(--placeholder-color)');
+                    const officialPayload = {
+                        status: submissionStatus,
+                        answers: answersData.answers,
+                        accessed_on: "room",
+                        executed_on: taskData.publication_target,
+                        duration: (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2)
+                    };
+                    const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
+                    const submitData = await submitResponse.json();
+                    if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
+                    const finalStatus = submitData.status === 'finished' ? 'Finalizado! ✔️' : (submitData.status === 'draft' ? 'Rascunho Salvo! ✔️' : `Status: ${submitData.status}`);
+                    updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
+                } catch (error) { updateTaskStatus(htmlId, `Erro: ${error.message}`, 'var(--red-color)'); }
+                await new Promise(resolve => setTimeout(resolve, 700));
+            }
+            ui.btnStartAutomation.disabled = false; ui.btnSaveDraft.disabled = false;
+            buttonToUpdate.textContent = originalButtonText;
+            alert('Processo finalizado para todas as tarefas selecionadas!');
+        };
 
-        ui.fetchTasksButton.addEventListener('click', fetchAndDisplayTasks);
-        ui.startButton.addEventListener('click', startDiagnosticProcess);
+        ui.btnAtividades.addEventListener('click', () => handleLoginAndShowModal('Atividades'));
+        ui.btnProvas.addEventListener('click', () => { alert('A automação de provas será implementada em breve!'); });
+        ui.togglePassword.addEventListener('click', () => {
+            const icon = ui.togglePassword.querySelector('i');
+            if (ui.senhaInput.type === 'password') { ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
+            } else { ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+        });
+        ui.modalCloseBtn.addEventListener('click', () => showModal(false));
+        ui.selectionModal.addEventListener('click', (e) => { if (e.target === ui.selectionModal) showModal(false); });
+        ui.selectAllCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked); });
+        ui.btnStartAutomation.addEventListener('click', () => handleAutomation('submitted'));
+        ui.btnSaveDraft.addEventListener('click', () => handleAutomation('draft'));
+    });
     </script>
 </body>
 </html>
