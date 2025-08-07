@@ -7,90 +7,169 @@
         body { font-family: 'Courier New', Courier, monospace; background-color: #1e1e1e; color: #d4d4d4; padding: 20px; }
         .container { max-width: 800px; margin: auto; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px; background-color: #3c3c3c; border: 1px solid #555; color: #d4d4d4; border-radius: 4px; }
-        button { padding: 10px 15px; background-color: #0e639c; border: none; color: white; cursor: pointer; border-radius: 4px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #4ec9b0; }
+        input { width: 100%; padding: 8px; background-color: #3c3c3c; border: 1px solid #555; color: #d4d4d4; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px 15px; background-color: #0e639c; border: none; color: white; cursor: pointer; border-radius: 4px; font-size: 1rem; margin-top: 5px; }
         button:disabled { background-color: #555; }
-        #log-output { margin-top: 20px; background-color: #252526; border: 1px solid #555; padding: 15px; white-space: pre-wrap; word-wrap: break-word; min-height: 300px; border-radius: 4px; }
+        #log-output { margin-top: 20px; background-color: #252526; border: 1px solid #555; padding: 15px; white-space: pre-wrap; word-wrap: break-word; min-height: 200px; max-height: 400px; overflow-y: auto; border-radius: 4px; }
         .log-entry { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #555; }
         .log-title { color: #4ec9b0; font-weight: bold; }
         .log-error { color: #f44747; }
+        /* --- NOVOS ESTILOS --- */
+        #task-list-container { border: 1px solid #555; padding: 10px; border-radius: 4px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .task-item { padding: 10px; border-bottom: 1px solid #3c3c3c; cursor: pointer; }
+        .task-item:hover { background-color: #3c3c3c; }
+        .task-item.selected { background-color: #0e639c; font-weight: bold; }
+        .task-item:last-child { border-bottom: none; }
+        .step-divider { margin: 20px 0; border-top: 2px solid #4ec9b0; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Painel de Diagnóstico de Tarefas</h1>
+        
+        <label>Passo 1: Login</label>
         <div class="form-group">
-            <label for="ra">RA (com dígito e UF):</label>
-            <input type="text" id="ra" placeholder="Ex: 123456789sp">
+            <input type="text" id="ra" placeholder="RA (com dígito e UF)">
         </div>
         <div class="form-group">
-            <label for="senha">Senha:</label>
-            <input type="password" id="senha">
+            <input type="password" id="senha" placeholder="Senha">
+        </div>
+        <button id="fetch-tasks-button">Buscar Tarefas Pendentes</button>
+        
+        <div id="task-list-container" style="display: none;">
+            <label>Passo 2: Selecione uma Tarefa da Lista</label>
+            <div id="task-list"></div>
+        </div>
+
+        <div class="step-divider"></div>
+
+        <label>Passo 3: Iniciar Diagnóstico para a Tarefa Selecionada</label>
+        <div class="form-group">
+            <input type="text" id="taskId" placeholder="ID da Tarefa (preenchido automaticamente)" readonly>
         </div>
         <div class="form-group">
-            <label for="taskId">ID da Tarefa:</label>
-            <input type="text" id="taskId" placeholder="Cole aqui o ID da tarefa a ser feita">
+            <input type="text" id="room" placeholder="Room da Tarefa (preenchido automaticamente)" readonly>
         </div>
-        <div class="form-group">
-            <label for="room">Room (ou publication_target):</label>
-            <input type="text" id="room" placeholder="Cole aqui o 'room' da tarefa">
-        </div>
-        <button id="start-button">Iniciar Processo de Diagnóstico</button>
+        <button id="start-button" disabled>Iniciar Processo de Diagnóstico</button>
         
         <h2>Log de Execução em Tempo Real:</h2>
         <div id="log-output"></div>
     </div>
 
     <script>
-        const raInput = document.getElementById('ra');
-        const senhaInput = document.getElementById('senha');
-        const taskIdInput = document.getElementById('taskId');
-        const roomInput = document.getElementById('room');
-        const startButton = document.getElementById('startButton');
-        const logOutput = document.getElementById('log-output');
+        // --- SELETORES DA UI ---
+        const ui = {
+            raInput: document.getElementById('ra'),
+            senhaInput: document.getElementById('senha'),
+            taskIdInput: document.getElementById('taskId'),
+            roomInput: document.getElementById('room'),
+            startButton: document.getElementById('start-button'),
+            fetchTasksButton: document.getElementById('fetch-tasks-button'),
+            logOutput: document.getElementById('log-output'),
+            taskListContainer: document.getElementById('task-list-container'),
+            taskList: document.getElementById('task-list')
+        };
 
+        // --- ESTADO DA APLICAÇÃO ---
+        const appState = {
+            loginData: null,
+            selectedTask: null
+        };
+
+        // --- FUNÇÕES AUXILIARES ---
         function logToPage(title, data, isError = false) {
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            
             const titleEl = document.createElement('div');
             titleEl.className = isError ? 'log-error log-title' : 'log-title';
             titleEl.textContent = `[${new Date().toLocaleTimeString()}] ${title}`;
             entry.appendChild(titleEl);
-
             if (data) {
                 const dataEl = document.createElement('pre');
                 dataEl.textContent = JSON.stringify(data, null, 2);
                 entry.appendChild(dataEl);
             }
-            logOutput.prepend(entry);
+            ui.logOutput.prepend(entry);
         }
 
-        async function startProcess() {
-            startButton.disabled = true;
-            logOutput.innerHTML = ''; // Limpa o log anterior
+        // --- FUNÇÕES PRINCIPAIS ---
 
-            const credentials = { user: raInput.value, senha: senhaInput.value };
-            const taskId = parseInt(taskIdInput.value);
-            const room = roomInput.value;
+        async function fetchAndDisplayTasks() {
+            ui.fetchTasksButton.disabled = true;
+            ui.fetchTasksButton.textContent = 'A buscar...';
+            logToPage("Buscando tarefas pendentes...");
 
             try {
-                // ETAPA 1: Login para obter o tokenB
-                logToPage("1. A tentar fazer login...", credentials.user);
+                const credentials = { user: ui.raInput.value, senha: ui.senhaInput.value };
                 const loginResponse = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(credentials)
                 });
                 const loginData = await loginResponse.json();
-                if (!loginResponse.ok) throw new Error(loginData.error);
-                const tokenB = loginData.tokenB;
-                logToPage("1. Login bem-sucedido! Token B obtido.", { tokenB: tokenB.substring(0, 30) + '...' });
+                if (!loginResponse.ok) throw new Error(loginData.error || 'Falha no Login');
+                
+                appState.loginData = loginData;
+                logToPage("Login bem-sucedido. A processar lista de tarefas...");
 
-                // ETAPA 2: Obter o gabarito (respostas)
-                const getAnswersPayload = { taskId, tokenB, room };
-                logToPage("2. A pedir o GABARITO (previewTask)...", getAnswersPayload);
+                ui.taskList.innerHTML = ''; // Limpa lista anterior
+                const pendingTasks = loginData.tarefas?.filter(t => t.answer_status !== 'submitted');
+
+                if (pendingTasks && pendingTasks.length > 0) {
+                    pendingTasks.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task-item';
+                        taskElement.textContent = `[ID: ${task.id}] - ${task.title}`;
+                        taskElement.dataset.taskId = task.id;
+                        taskElement.addEventListener('click', () => selectTask(task));
+                        ui.taskList.appendChild(taskElement);
+                    });
+                    ui.taskListContainer.style.display = 'block';
+                    logToPage(`${pendingTasks.length} tarefas encontradas. Selecione uma da lista acima.`);
+                } else {
+                    logToPage("Nenhuma tarefa pendente encontrada.");
+                }
+
+            } catch (error) {
+                logToPage("!!! ERRO AO BUSCAR TAREFAS !!!", { message: error.message }, true);
+            } finally {
+                ui.fetchTasksButton.disabled = false;
+                ui.fetchTasksButton.textContent = 'Buscar Tarefas Pendentes';
+            }
+        }
+
+        function selectTask(task) {
+            appState.selectedTask = task;
+            ui.taskIdInput.value = task.id;
+            ui.roomInput.value = task.publication_target;
+            ui.startButton.disabled = false; // Habilita o botão de diagnóstico
+
+            // Lógica para destacar o item selecionado
+            document.querySelectorAll('.task-item').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.task-item[data-task-id='${task.id}']`).classList.add('selected');
+
+            logToPage(`Tarefa selecionada: ${task.title}`);
+        }
+
+        async function startDiagnosticProcess() {
+            ui.startButton.disabled = true;
+            ui.logOutput.innerHTML = ''; // Limpa o log para a nova análise
+
+            const { selectedTask, loginData } = appState;
+            if (!selectedTask || !loginData) {
+                logToPage("ERRO: Nenhuma tarefa selecionada ou login não efetuado.", null, true);
+                ui.startButton.disabled = false;
+                return;
+            }
+
+            try {
+                const tokenB = loginData.tokenB;
+                logToPage("Iniciando diagnóstico para a tarefa:", selectedTask.title);
+
+                // ETAPA 1: Obter o gabarito
+                const getAnswersPayload = { taskId: selectedTask.id, tokenB, room: selectedTask.publication_target };
+                logToPage("1. A pedir o GABARITO (previewTask)...", getAnswersPayload);
                 const answersResponse = await fetch('/api/get-answers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -98,21 +177,21 @@
                 });
                 const answersData = await answersResponse.json();
                 if (!answersResponse.ok) throw new Error(answersData.error);
-                logToPage("2. GABARITO recebido com sucesso!", answersData);
+                logToPage("1. GABARITO recebido com sucesso!", answersData);
 
-                // ETAPA 3: Preparar e submeter a tarefa
+                // ETAPA 2: Preparar e submeter
                 const submitPayload = {
                     type: "submit",
-                    taskId: taskId,
+                    taskId: selectedTask.id,
                     token: tokenB,
-                    tipo: "Pendente", // Podemos ajustar isto se necessário
-                    tempo: 120, // Tempo fixo para o teste
+                    tipo: selectedTask.task_expired ? "Expirada" : "Pendente",
+                    tempo: 120,
                     status: "submitted",
                     accessed_on: "room",
-                    executed_on: room,
+                    executed_on: selectedTask.publication_target,
                     answers: answersData.answers
                 };
-                logToPage("3. A SUBMETER a tarefa com o gabarito...", submitPayload);
+                logToPage("2. A SUBMETER a tarefa com o gabarito...", submitPayload);
                 const submitResponse = await fetch('/api/submit-task', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -120,18 +199,20 @@
                 });
                 const submitData = await submitResponse.json();
                 if (!submitResponse.ok) throw new Error(submitData.error);
-                logToPage("3. Resposta final da SUBMISSÃO!", submitData);
+                logToPage("2. Resposta final da SUBMISSÃO!", submitData);
 
                 logToPage("PROCESSO DE DIAGNÓSTICO CONCLUÍDO!");
 
             } catch (error) {
                 logToPage("!!! ERRO CRÍTICO NO PROCESSO !!!", { message: error.message }, true);
             } finally {
-                startButton.disabled = false;
+                // Mantém o botão desativado para forçar uma nova seleção
+                // ui.startButton.disabled = false; 
             }
         }
 
-        startButton.addEventListener('click', startProcess);
+        ui.fetchTasksButton.addEventListener('click', fetchAndDisplayTasks);
+        ui.startButton.addEventListener('click', startDiagnosticProcess);
     </script>
 </body>
 </html>
