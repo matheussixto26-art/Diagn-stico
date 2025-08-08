@@ -10,20 +10,11 @@ async function fetchApiData(requestConfig) {
     }
 }
 
-// Função para classificar o tipo de atividade
 function classifyTask(task) {
-    // ***** CORREÇÃO AQUI *****
-    // Adicionamos '|| ""' para garantir que, se o título não existir, usamos um texto vazio
-    // Isto evita o erro quando tentamos usar .toLowerCase() em algo que não é um texto.
     const title = (task.title || '').toLowerCase();
     const tags = task.tags || [];
-
-    if (tags.includes('redacaopaulista') || title.includes('redação')) {
-        return 'essay';
-    }
-    if (task.is_exam || title.includes('prova') || title.includes('avaliação')) {
-        return 'exam';
-    }
+    if (tags.includes('redacaopaulista') || title.includes('redação')) { return 'essay'; }
+    if (task.is_exam || title.includes('prova') || title.includes('avaliação')) { return 'exam'; }
     return 'task';
 }
 
@@ -33,7 +24,19 @@ module.exports = async (req, res) => {
         const { user, senha } = req.body;
         if (!user || !senha) { return res.status(400).json({ error: 'RA e Senha são obrigatórios.' }); }
         
-        const loginResponse = await axios.post("https://sedintegracoes.educacao.sp.gov.br/credenciais/api/LoginCompletoToken", { user, senha }, { headers: { "Ocp-Apim-Subscription-Key": "2b03c1db3884488795f79c37c069381a" } });
+        // ***** MELHORIA NO TRATAMENTO DE ERRO DE LOGIN *****
+        let loginResponse;
+        try {
+            loginResponse = await axios.post("https://sedintegracoes.educacao.sp.gov.br/credenciais/api/LoginCompletoToken", { user, senha }, { headers: { "Ocp-Apim-Subscription-Key": "2b03c1db3884488795f79c37c069381a" } });
+        } catch (error) {
+            if (error.response?.status === 401) {
+                // Se o erro for 401, devolvemos uma mensagem clara.
+                return res.status(401).json({ error: 'RA ou Senha inválidos. Verifique os seus dados.' });
+            }
+            // Para outros erros de login, lançamos para o catch principal.
+            throw error;
+        }
+
         if (!loginResponse.data || !loginResponse.data.token) { return res.status(401).json({ error: 'Credenciais inválidas.' }); }
         const tokenA = loginResponse.data.token;
         const userInfo = loginResponse.data.DadosUsuario;
@@ -45,8 +48,16 @@ module.exports = async (req, res) => {
         const roomUserData = await fetchApiData({ method: 'get', url: 'https://edusp-api.ip.tv/room/user?list_all=true', headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } });
         let publicationTargetsQuery = '';
         if (roomUserData && roomUserData.rooms) {
-            const targets = roomUserData.rooms.flatMap(room => [room.publication_target, room.name, ...(room.group_categories?.map(g => g.id) || [])]);
-            publicationTargetsQuery = [...new Set(targets)].map(target => `publication_target[]=${encodeURIComponent(target)}`).join('&');
+            const targets = roomUserData.rooms.flatMap(room => [
+                room.publication_target, 
+                room.name, 
+                ...(room.group_categories?.map(g => g.id) || [])
+            ]);
+            
+            // ***** CORREÇÃO DO BUG "UNDEFINED" AQUI *****
+            // Filtramos o array para remover quaisquer valores nulos ou indefinidos antes de montar a URL.
+            const cleanedTargets = [...new Set(targets)].filter(Boolean);
+            publicationTargetsQuery = cleanedTargets.map(target => `publication_target[]=${encodeURIComponent(target)}`).join('&');
         }
         
         const baseTaskUrl = `https://edusp-api.ip.tv/tms/task/todo?limit=150&with_answer=true&${publicationTargetsQuery}`;
@@ -74,4 +85,4 @@ module.exports = async (req, res) => {
         res.status(500).json({ error: 'Ocorreu um erro fatal no servidor ao processar o login.', details: error.message });
     }
 };
-    
+                
