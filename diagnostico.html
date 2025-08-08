@@ -15,7 +15,6 @@
         .login-container h1 { font-size: 4em; color: var(--text-color); font-weight: 700; }
         .login-container .subtitle { font-size: 1rem; color: var(--placeholder-color); margin-bottom: 30px; }
         .input-wrapper { position: relative; margin-bottom: 20px; }
-        .input-wrapper label { display: block; text-align: left; margin-bottom: 8px; font-weight: 500; }
         .input-wrapper input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg-color); color: var(--text-color); font-size: 1rem; }
         .input-wrapper .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--placeholder-color); }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; margin-top: 10px; }
@@ -39,7 +38,6 @@
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
         .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
-        /* --- CSS CORRIGIDO AQUI --- */
         .task-content { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
         .task-title { font-weight: 500; }
         .task-tags { display: flex; margin-top: 5px; }
@@ -47,7 +45,6 @@
         .tag.expirada { background-color: var(--orange-color); color: white; }
         .tag.rascunho { background-color: var(--blue-color); color: white; }
         .config-section, .automation-status { margin-top: 15px; }
-        .config-section h3 { font-size: 1.5em; margin-bottom: 15px; }
         .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
         .config-group input, .config-group select { width: 80px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
         .config-group select { width: 120px; text-align: left; }
@@ -62,7 +59,7 @@
     <main id="login-screen">
         <div class="login-container"><h1>Finituss</h1><p class="subtitle">para sala do futuro e cmsp!</p>
             <form id="login-form">
-                <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp | ex: 123456789sp" required></div>
+                <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp" required></div>
                 <div class="input-wrapper"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
                 <button type="button" id="btn-tarefas" class="btn btn-secondary">Tarefas</button>
                 <button type="button" id="btn-provas" class="btn btn-secondary" disabled>Provas (Em Breve)</button>
@@ -79,13 +76,7 @@
                 <div class="config-section">
                     <h3>Configurações</h3>
                     <div class="config-group"><label for="target-score">Pontuação Desejada</label>
-                        <select id="target-score">
-                            <option value="1">100% (Gabarito)</option>
-                            <option value="0.75">75%</option>
-                            <option value="0.5">50%</option>
-                            <option value="0.25">25%</option>
-                            <option value="0">0% (Errar Tudo)</option>
-                        </select>
+                        <select id="target-score"><option value="1">100% (Gabarito)</option><option value="0.75">75%</option><option value="0.5">50%</option><option value="0.25">25%</option><option value="0">0% (Errar Tudo)</option></select>
                     </div>
                     <div class="config-group"><label for="min-time">Tempo Mínimo (segundos)</label><input type="number" id="min-time" value="90" min="1"></div>
                     <div class="config-group"><label for="max-time">Tempo Máximo (segundos)</label><input type="number" id="max-time" value="300" max="3600"></div>
@@ -155,32 +146,17 @@
         const populateSelectionModal = (activityType) => {
             const titleMap = { task: 'Tarefas', exam: 'Provas', essay: 'Redações' };
             ui.modalTitle.textContent = titleMap[activityType];
-            
             const items = ui.activityListContainer.querySelectorAll('.activity-item:not(:first-child)');
             items.forEach(item => item.remove());
-            
             const tasksToDisplay = appState.data.tarefas?.filter(t => t.type === activityType && t.answer_status !== 'submitted');
-
             if (tasksToDisplay && tasksToDisplay.length > 0) {
                 tasksToDisplay.forEach(task => {
                     const listItem = document.createElement('li'); listItem.className = 'activity-item';
                     const htmlId = `task-${task.id}`;
-                    
                     let tags = '';
                     if (task.task_expired) tags += '<span class="tag expirada">EXPIRADA</span>';
                     if (task.answer_status === 'draft') tags += '<span class="tag rascunho">RASCUNHO</span>';
-                    
-                    // ***** MUDANÇA PRINCIPAL AQUI *****
-                    // Envolve o título e as tags num novo container para corrigir o bug de layout
-                    listItem.innerHTML = `
-                        <input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}">
-                        <label for="${htmlId}">
-                            <span class="custom-checkbox"></span>
-                            <div class="task-content">
-                                <span class="task-title">${task.title}</span>
-                                <div class="task-tags">${tags}</div>
-                            </div>
-                        </label>`;
+                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><div class="task-content"><span class="task-title">${task.title}</span><div class="task-tags">${tags}</div></div></label>`;
                     ui.activityListContainer.appendChild(listItem);
                 });
             } else {
@@ -197,12 +173,8 @@
             const questions = Object.values(answers);
             const totalQuestions = questions.length;
             if (totalQuestions === 0) return answers;
-
             const questionsToGetRight = Math.round(totalQuestions * targetScoreRatio);
-            
-            // Embaralha as questões para errar aleatoriamente
             questions.sort(() => 0.5 - Math.random());
-            
             for (let i = 0; i < (totalQuestions - questionsToGetRight); i++) {
                 const q = questions[i];
                 if (q.question_type === 'single' || q.question_type === 'true-false') {
@@ -210,15 +182,9 @@
                      if (keys.length > 1) {
                         let firstTrueKey = keys.find(k => q.answer[k] === true);
                         let firstFalseKey = keys.find(k => q.answer[k] === false);
-                        if(firstTrueKey && firstFalseKey) {
-                           q.answer[firstTrueKey] = false;
-                           q.answer[firstFalseKey] = true;
-                        } else if (firstTrueKey) { // Caso só haja uma resposta (ex: true/false com uma opção)
-                           q.answer[firstTrueKey] = false;
-                        }
-                     } else if (keys.length === 1){
-                         q.answer[keys[0]] = !q.answer[keys[0]];
-                     }
+                        if(firstTrueKey && firstFalseKey) { q.answer[firstTrueKey] = false; q.answer[firstFalseKey] = true; } 
+                        else if (firstTrueKey) { q.answer[firstTrueKey] = false; }
+                     } else if (keys.length === 1){ q.answer[keys[0]] = !q.answer[keys[0]]; }
                 } else { q.answer = ["resposta", "errada"]; }
             }
             return answers;
@@ -227,23 +193,16 @@
         const handleAutomation = async (submissionStatus = 'submitted') => {
             const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
             if (selectedCheckboxes.length === 0) { alert('Por favor, selecione pelo menos uma atividade.'); return; }
-            
             ui.automationControls.classList.add('hidden');
             ui.automationStatusContainer.classList.remove('hidden');
-            ui.progressBar.style.width = `0%`;
-            ui.progressBar.textContent = `0%`;
-
+            ui.progressBar.style.width = `0%`; ui.progressBar.textContent = `0%`;
             const minSeconds = parseFloat(ui.minTimeInput.value) || 1;
             const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
             const targetScoreRatio = parseFloat(ui.targetScoreSelect.value);
-            
-            let tasksCompleted = 0;
-            const totalTasks = selectedCheckboxes.length;
-            
+            let tasksCompleted = 0; const totalTasks = selectedCheckboxes.length;
             for (const checkbox of selectedCheckboxes) {
                 const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
                 const taskData = appState.data.tarefas.find(t => t.id == taskId);
-
                 if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); tasksCompleted++; continue; }
                 try {
                     ui.statusText.textContent = `(${tasksCompleted + 1}/${totalTasks}) Obtendo gabarito para: ${taskData.title.substring(0, 30)}...`;
@@ -251,30 +210,23 @@
                     const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
                     const answersData = await answersResponse.json();
                     if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
-                    
                     const modifiedAnswers = modifyAnswersForTargetScore(JSON.parse(JSON.stringify(answersData.answers)), targetScoreRatio);
-                    
                     ui.statusText.textContent = `(${tasksCompleted + 1}/${totalTasks}) Enviando respostas para: ${taskData.title.substring(0, 30)}...`;
                     const officialPayload = { status: submissionStatus, answers: modifiedAnswers, accessed_on: "room", executed_on: taskData.publication_target, duration: (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2) };
                     const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
                     const submitData = await submitResponse.json();
                     if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
-                    
                     const scoreInfo = submitData.result_score !== undefined ? `Nota: ${submitData.result_score}` : '';
                     const finalStatus = submitData.status === 'finished' ? `Finalizado! ${scoreInfo} ✔️` : (submitData.status === 'draft' ? 'Rascunho Salvo! ✔️' : `Status: ${submitData.status}`);
                     updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
-
                 } catch (error) { updateTaskStatus(htmlId, `Erro`, 'var(--red-color)'); ui.statusText.textContent = `Erro em ${taskData.title}: ${error.message}`; }
-                
                 tasksCompleted++;
                 const progress = Math.round((tasksCompleted / totalTasks) * 100);
-                ui.progressBar.style.width = `${progress}%`;
-                ui.progressBar.textContent = `${progress}%`;
+                ui.progressBar.style.width = `${progress}%`; ui.progressBar.textContent = `${progress}%`;
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
             ui.statusText.textContent = 'Processo finalizado!';
         };
-
         ui.btnTarefas.addEventListener('click', () => handleLoginAndShowModal('task'));
         ui.togglePassword.addEventListener('click', () => { const icon = ui.togglePassword.querySelector('i'); if (ui.senhaInput.type === 'password') { ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } else { ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); } });
         ui.modalCloseBtn.addEventListener('click', () => showModal(false));
