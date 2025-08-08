@@ -11,14 +11,6 @@ async function fetchApiData(requestConfig) {
     }
 }
 
-function classifyTask(task) {
-    const title = (task.title || '').toLowerCase();
-    const tags = task.tags || [];
-    if (tags.includes('redacaopaulista') || title.includes('redação')) { return 'essay'; }
-    if (task.is_exam || title.includes('prova') || title.includes('avaliação')) { return 'exam'; }
-    return 'task';
-}
-
 module.exports = async (req, res) => {
     try {
         if (req.method !== 'POST') { return res.status(405).json({ error: 'Método não permitido.' }); }
@@ -43,13 +35,8 @@ module.exports = async (req, res) => {
         
         const roomUserData = await fetchApiData({ method: 'get', url: 'https://edusp-api.ip.tv/room/user?list_all=true', headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } });
         
-        // --- LÓGICA DE BUSCA DE TAREFAS RECONSTRUÍDA ---
         const baseUrl = 'https://edusp-api.ip.tv/tms/task/todo';
-        const baseParams = new URLSearchParams({
-            limit: 150,
-            with_answer: true,
-        });
-
+        const baseParams = new URLSearchParams({ limit: 150, with_answer: true });
         if (roomUserData && roomUserData.rooms) {
             const targets = roomUserData.rooms.flatMap(room => [room.publication_target, room.name, ...(room.group_categories?.map(g => g.id) || [])]);
             const cleanedTargets = [...new Set(targets)].filter(Boolean);
@@ -75,16 +62,10 @@ module.exports = async (req, res) => {
         const allTasksRaw = (Array.isArray(pendingTasks) ? pendingTasks : []).concat(Array.isArray(expiredTasks) ? expiredTasks : []);
         const allTasksUnique = [...new Map(allTasksRaw.map(task => [task.id, task])).values()];
         
-        const classifiedTasks = allTasksUnique.map(task => ({
-            ...task,
-            type: classifyTask(task)
-        }));
-
-        const dashboardData = { tokenB, tarefas: classifiedTasks };
+        const dashboardData = { tokenB, tarefas: allTasksUnique };
         res.status(200).json(dashboardData);
     } catch (error) {
         console.error("--- ERRO FATAL NA FUNÇÃO /api/login ---", error);
         res.status(500).json({ error: 'Ocorreu um erro fatal no servidor ao processar o login.', details: error.message });
     }
 };
-    
