@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --background-color: #4b365e; --container-color: #5f4575; --input-bg-color: #4b365e; --text-color: #f0e6f2; --placeholder-color: #bca9c5; --accent-color: #e886a3; --border-color: #7c619c; --green-color: #23d183; --red-color: #e53965; }
+        :root { --background-color: #4b365e; --container-color: #5f4575; --input-bg-color: #4b365e; --text-color: #f0e6f2; --placeholder-color: #bca9c5; --accent-color: #e886a3; --border-color: #7c619c; --green-color: #23d183; --red-color: #e53965; --orange-color: #f77829;}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: var(--background-color); background-image: url('https://www.transparenttextures.com/patterns/spooky.png'); color: var(--text-color); font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
         .hidden { display: none !important; }
@@ -40,19 +40,20 @@
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
         .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
         .activity-item input[type="checkbox"]:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
+        .task-title { flex-grow: 1; }
+        .tag { background-color: var(--bg-dark); color: var(--text-secondary); padding: 3px 8px; border-radius: 5px; font-size: 0.8em; margin-left: 10px; flex-shrink: 0;}
+        .tag.expirada { background-color: var(--orange-color); color: white; }
         .config-section { margin-top: 25px; }
         .config-section h3 { font-size: 1.5em; margin-bottom: 15px; }
         .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-        .config-group input[type="number"] { width: 60px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
+        .config-group input[type="number"] { width: 80px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
     </style>
 </head>
 <body>
     <main id="login-screen">
-        <div class="login-container">
-            <h1>Finituss</h1>
-            <p class="subtitle">para sala do futuro e cmsp!</p>
+        <div class="login-container"><h1>Finituss</h1><p class="subtitle">para sala do futuro e cmsp!</p>
             <form id="login-form">
                 <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp | ex: 123456789sp" required></div>
                 <div class="input-wrapper"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
@@ -68,8 +69,8 @@
             <ul class="activity-list" id="activity-list-container"><li class="activity-item"><input type="checkbox" id="select-all"><label for="select-all"><span class="custom-checkbox"></span>Selecionar Todas as Atividades</label></li></ul>
             <div class="config-section">
                 <h3>Configurações de Tempo</h3>
-                <div class="config-group"><label for="min-time">Tempo Mínimo (minutos)</label><input type="number" id="min-time" value="1"></div>
-                <div class="config-group"><label for="max-time">Tempo Máximo (minutos)</label><input type="number" id="max-time" value="3"></div>
+                <div class="config-group"><label for="min-time">Tempo Mínimo (segundos)</label><input type="number" id="min-time" value="90" min="1"></div>
+                <div class="config-group"><label for="max-time">Tempo Máximo (segundos)</label><input type="number" id="max-time" value="300" max="3600"></div>
             </div>
             <div class="action-buttons">
                  <button id="btn-start-automation" class="btn btn-primary">Fazer Atividades Selecionadas</button>
@@ -77,31 +78,12 @@
             </div>
         </div>
     </div>
-    <div id="loading-overlay" class="hidden">
-        <h2 style="color:white; font-size: 1.5em;">Aguarde...</h2>
-    </div>
+    <div id="loading-overlay" class="hidden"><h2 style="color:white; font-size: 1.5em;">Aguarde...</h2></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const appState = { data: null, tokenB: null };
-        const ui = {
-            raInput: document.getElementById('ra'),
-            senhaInput: document.getElementById('senha'),
-            togglePassword: document.querySelector('.toggle-password'),
-            loginMessage: document.getElementById('login-message'),
-            btnAtividades: document.getElementById('btn-atividades'),
-            btnProvas: document.getElementById('btn-provas'),
-            loadingOverlay: document.getElementById('loading-overlay'),
-            selectionModal: document.getElementById('selection-modal'),
-            modalTitle: document.getElementById('modal-title'),
-            activityListContainer: document.getElementById('activity-list-container'),
-            selectAllCheckbox: document.getElementById('select-all'),
-            modalCloseBtn: document.querySelector('.modal-close'),
-            minTimeInput: document.getElementById('min-time'),
-            maxTimeInput: document.getElementById('max-time'),
-            btnStartAutomation: document.getElementById('btn-start-automation'),
-            btnSaveDraft: document.getElementById('btn-save-draft')
-        };
+        const ui = { raInput: document.getElementById('ra'), senhaInput: document.getElementById('senha'), togglePassword: document.querySelector('.toggle-password'), loginMessage: document.getElementById('login-message'), btnAtividades: document.getElementById('btn-atividades'), btnProvas: document.getElementById('btn-provas'), loadingOverlay: document.getElementById('loading-overlay'), selectionModal: document.getElementById('selection-modal'), modalTitle: document.getElementById('modal-title'), activityListContainer: document.getElementById('activity-list-container'), selectAllCheckbox: document.getElementById('select-all'), modalCloseBtn: document.querySelector('.modal-close'), minTimeInput: document.getElementById('min-time'), maxTimeInput: document.getElementById('max-time'), btnStartAutomation: document.getElementById('btn-start-automation'), btnSaveDraft: document.getElementById('btn-save-draft') };
         
         const showLoading = (show) => ui.loadingOverlay.classList.toggle('hidden', !show);
         const showModal = (show) => ui.selectionModal.classList.toggle('is-visible', show);
@@ -140,7 +122,9 @@
                 pendingTasks.forEach(task => {
                     const listItem = document.createElement('li'); listItem.className = 'activity-item';
                     const htmlId = `task-${task.id}`;
-                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span>${task.title}</label>`;
+                    // Adiciona a tag de expirada se for o caso
+                    const expiredTag = task.task_expired ? '<span class="tag expirada">EXPIRADA</span>' : '';
+                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><span class="task-title">${task.title}</span>${expiredTag}</label>`;
                     ui.activityListContainer.appendChild(listItem);
                 });
             } else {
@@ -150,71 +134,43 @@
             }
         };
 
-        /**
-         * FUNÇÃO ATUALIZADA COM O NOVO MOTOR DE SUBMISSÃO DIRETA
-         * @param {string} submissionStatus - 'submitted' para entregar ou 'draft' para rascunho.
-         */
         const handleAutomation = async (submissionStatus = 'submitted') => {
             const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
-            if (selectedCheckboxes.length === 0) {
-                alert('Por favor, selecione pelo menos uma atividade.');
-                return;
-            }
-
+            if (selectedCheckboxes.length === 0) { alert('Por favor, selecione pelo menos uma atividade.'); return; }
             ui.btnStartAutomation.disabled = true; ui.btnSaveDraft.disabled = true;
             const originalButtonText = (submissionStatus === 'submitted') ? 'Fazer Atividades Selecionadas' : 'Salvar como Rascunho';
             const buttonToUpdate = (submissionStatus === 'submitted') ? ui.btnStartAutomation : ui.btnSaveDraft;
             buttonToUpdate.textContent = 'A processar...';
 
-            const minMinutes = parseFloat(ui.minTimeInput.value) || 1;
-            const maxMinutes = parseFloat(ui.maxTimeInput.value) || 3;
+            const minSeconds = parseFloat(ui.minTimeInput.value) || 1;
+            const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
             
             for (const checkbox of selectedCheckboxes) {
-                const taskId = checkbox.dataset.taskId;
-                const htmlId = checkbox.id;
+                const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
                 const taskData = appState.data.tarefas.find(t => t.id == taskId);
-                
-                if (!taskData) {
-                    updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)');
-                    continue;
-                }
-
+                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); continue; }
                 try {
-                    // PASSO 1: Obter gabarito
                     updateTaskStatus(htmlId, '1/2: Obtendo gabarito...', 'var(--placeholder-color)');
                     const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
                     const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
                     const answersData = await answersResponse.json();
-                    if (!answersResponse.ok) throw new Error(`Falha ao obter gabarito: ${answersData.error}`);
-
-                    // PASSO 2: Submeter com o gabarito
+                    if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
                     updateTaskStatus(htmlId, '2/2: Enviando respostas...', 'var(--placeholder-color)');
                     const officialPayload = {
                         status: submissionStatus,
                         answers: answersData.answers,
                         accessed_on: "room",
                         executed_on: taskData.publication_target,
-                        duration: (Math.random() * (maxMinutes - minMinutes) * 60 + (minMinutes * 60)).toFixed(2)
+                        duration: (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2)
                     };
-                    
-                    const submitResponse = await fetch('/api/submit-task', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload })
-                    });
+                    const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
                     const submitData = await submitResponse.json();
-                    if (!submitResponse.ok) throw new Error(`Falha na submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
-                    
-                    const finalStatus = submitData.status === 'finished' ? 'Finalizado! ✔️' : `Status: ${submitData.status}`;
+                    if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
+                    const finalStatus = submitData.status === 'finished' ? 'Finalizado! ✔️' : (submitData.status === 'draft' ? 'Rascunho Salvo! ✔️' : `Status: ${submitData.status}`);
                     updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
-
-                } catch (error) {
-                    updateTaskStatus(htmlId, `Erro: ${error.message}`, 'var(--red-color)');
-                }
-                
+                } catch (error) { updateTaskStatus(htmlId, `Erro: ${error.message}`, 'var(--red-color)'); }
                 await new Promise(resolve => setTimeout(resolve, 700));
             }
-
             ui.btnStartAutomation.disabled = false; ui.btnSaveDraft.disabled = false;
             buttonToUpdate.textContent = originalButtonText;
             alert('Processo finalizado para todas as tarefas selecionadas!');
@@ -224,20 +180,15 @@
         ui.btnProvas.addEventListener('click', () => { alert('A automação de provas será implementada em breve!'); });
         ui.togglePassword.addEventListener('click', () => {
             const icon = ui.togglePassword.querySelector('i');
-            if (ui.senhaInput.type === 'password') {
-                ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
-            } else {
-                ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
-            }
+            if (ui.senhaInput.type === 'password') { ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
+            } else { ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
         });
         ui.modalCloseBtn.addEventListener('click', () => showModal(false));
         ui.selectionModal.addEventListener('click', (e) => { if (e.target === ui.selectionModal) showModal(false); });
         ui.selectAllCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked); });
-        
         ui.btnStartAutomation.addEventListener('click', () => handleAutomation('submitted'));
         ui.btnSaveDraft.addEventListener('click', () => handleAutomation('draft'));
     });
     </script>
 </body>
-    </html>
-    
+</html>
