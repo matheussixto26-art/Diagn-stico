@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finituss | Automatizador Sala do Futuro</title>
+    <title>Finituss | Automatizador de Tarefas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -22,7 +22,6 @@
         .btn-primary:hover { background-color: #d16d8a; }
         .btn-secondary { background-color: var(--container-color); border: 1px solid var(--border-color); }
         .btn-secondary:hover { background-color: #71538a; }
-        .btn-debug { background-color: var(--orange-color); } /* Botão de Debug */
         .btn:disabled { background-color: #555 !important; border-color: #555 !important; cursor: not-allowed; opacity: 0.6; }
         #login-message { margin-top: 20px; min-height: 20px; color: var(--red-color); font-weight: 500; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -45,10 +44,11 @@
         .tag { padding: 3px 8px; border-radius: 10px; font-size: 0.75em; margin-right: 5px; font-weight: 600; }
         .tag.expirada { background-color: var(--orange-color); color: white; }
         .tag.rascunho { background-color: var(--blue-color); color: white; }
+        .config-section { margin-top: 15px; }
+        .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .config-group input { width: 80px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        /* --- NOVO: Estilos para a área de Debug --- */
-        #debug-output { margin-top: 15px; background-color: #252526; border: 1px solid #555; padding: 10px; white-space: pre-wrap; word-wrap: break-word; max-height: 200px; overflow-y: auto; border-radius: 4px; text-align: left; font-size: 0.8rem;}
     </style>
 </head>
 <body>
@@ -57,42 +57,60 @@
             <form id="login-form">
                 <div class="input-wrapper"><label for="ra">RA</label><input type="text" id="ra" placeholder="RA + dígito + sp" required></div>
                 <div class="input-wrapper"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
-                <button type="button" id="btn-tarefas" class="btn btn-secondary">Tarefas</button>
-                <button type="button" id="btn-provas" class="btn btn-secondary">Provas</button>
+                <button type="button" id="btn-tarefas" class="btn btn-secondary">Buscar Tarefas</button>
             </form>
             <div id="login-message"></div>
         </div>
     </main>
     <div id="selection-modal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header"><h2 id="modal-title">Selecionar</h2><button class="modal-close">&times;</button></div>
+            <div class="modal-header"><h2>Selecionar Tarefas</h2><button class="modal-close">&times;</button></div>
             <ul class="activity-list" id="activity-list-container"><li class="activity-item"><input type="checkbox" id="select-all"><label for="select-all"><span class="custom-checkbox"></span>Selecionar Todas</label></li></ul>
-            
-            <button id="btn-debug" class="btn btn-debug">Mostrar Dados de Debug</button>
-            <pre id="debug-output" class="hidden"></pre>
+            <div class="config-section">
+                <h3>Configurações</h3>
+                <div class="config-group"><label for="min-time">Tempo Mínimo (segundos)</label><input type="number" id="min-time" value="90" min="1"></div>
+                <div class="config-group"><label for="max-time">Tempo Máximo (segundos)</label><input type="number" id="max-time" value="300" max="3600"></div>
+            </div>
+            <div class="action-buttons">
+                 <button id="btn-start-automation" class="btn btn-primary">Fazer Selecionadas</button>
+                 <button id="btn-save-draft" class="btn btn-secondary">Salvar como Rascunho</button>
+            </div>
         </div>
     </div>
     <div id="loading-overlay" class="hidden"><h2 style="color:white; font-size: 1.5em;">Aguarde...</h2></div>
         <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const appState = { data: null, tokenB: null, currentActivityType: 'task' };
+        const appState = { data: null, tokenB: null };
         const ui = { 
             raInput: document.getElementById('ra'), senhaInput: document.getElementById('senha'), 
             togglePassword: document.querySelector('.toggle-password'), loginMessage: document.getElementById('login-message'), 
-            btnTarefas: document.getElementById('btn-tarefas'), btnProvas: document.getElementById('btn-provas'),
+            btnTarefas: document.getElementById('btn-tarefas'),
             loadingOverlay: document.getElementById('loading-overlay'), selectionModal: document.getElementById('selection-modal'), 
-            modalTitle: document.getElementById('modal-title'), activityListContainer: document.getElementById('activity-list-container'), 
-            selectAllCheckbox: document.getElementById('select-all'), modalCloseBtn: document.querySelector('.modal-close'),
-            // --- NOVO: Botão e área de Debug ---
-            btnDebug: document.getElementById('btn-debug'),
-            debugOutput: document.getElementById('debug-output')
+            activityListContainer: document.getElementById('activity-list-container'), 
+            selectAllCheckbox: document.getElementById('select-all'), modalCloseBtn: document.querySelector('.modal-close'), 
+            minTimeInput: document.getElementById('min-time'), 
+            maxTimeInput: document.getElementById('max-time'),
+            btnStartAutomation: document.getElementById('btn-start-automation'), 
+            btnSaveDraft: document.getElementById('btn-save-draft')
         };
         
         const showLoading = (show) => ui.loadingOverlay.classList.toggle('hidden', !show);
         const showModal = (show) => ui.selectionModal.classList.toggle('is-visible', show);
+
+        const updateTaskStatus = (htmlId, message, color) => {
+            const label = document.querySelector(`label[for="${htmlId}"]`);
+            if (!label) return;
+            let statusSpan = label.querySelector('.status-span');
+            if (!statusSpan) {
+                statusSpan = document.createElement('span'); statusSpan.className = 'status-span';
+                statusSpan.style.marginLeft = 'auto'; statusSpan.style.fontWeight = '500';
+                const contentWrapper = label.querySelector('.task-content');
+                if (contentWrapper) contentWrapper.appendChild(statusSpan);
+            }
+            statusSpan.textContent = message; statusSpan.style.color = color;
+        };
         
-        const handleLoginAndShowModal = async (activityType) => {
-            appState.currentActivityType = activityType;
+        const handleLoginAndShowModal = async () => {
             ui.loginMessage.textContent = ''; showLoading(true);
             try {
                 const credentials = { user: ui.raInput.value, senha: ui.senhaInput.value };
@@ -100,23 +118,16 @@
                 const loginData = await loginResponse.json();
                 if (!loginResponse.ok) throw new Error(loginData.error || 'Falha no Login');
                 appState.data = loginData; appState.tokenB = loginData.tokenB;
-                populateSelectionModal(activityType); 
+                populateSelectionModal(); 
                 showModal(true);
             } catch (error) { ui.loginMessage.textContent = `❌ ${error.message}`;
             } finally { showLoading(false); }
         };
 
-        const populateSelectionModal = (activityType) => {
-            const titleMap = { task: 'Tarefas', exam: 'Provas' };
-            ui.modalTitle.textContent = titleMap[activityType] || 'Atividades';
+        const populateSelectionModal = () => {
             const items = ui.activityListContainer.querySelectorAll('.activity-item:not(:first-child)');
             items.forEach(item => item.remove());
-            
-            // Oculta a área de debug por padrão
-            ui.debugOutput.classList.add('hidden');
-
-            const tasksToDisplay = appState.data.tarefas?.filter(t => t.type === activityType && t.answer_status !== 'submitted');
-
+            const tasksToDisplay = appState.data.tarefas?.filter(t => t.answer_status !== 'submitted');
             if (tasksToDisplay && tasksToDisplay.length > 0) {
                 tasksToDisplay.forEach(task => {
                     const listItem = document.createElement('li'); listItem.className = 'activity-item';
@@ -129,38 +140,53 @@
                 });
             } else {
                  const noItem = document.createElement('li'); noItem.className = 'activity-item';
-                 noItem.innerHTML = `<p>Nenhuma atividade do tipo '${titleMap[activityType]}' encontrada.</p>`;
+                 noItem.innerHTML = `<p>Nenhuma tarefa encontrada.</p>`;
                  ui.activityListContainer.appendChild(noItem);
             }
         };
 
-        // --- Event Listeners ---
-        ui.btnTarefas.addEventListener('click', () => handleLoginAndShowModal('task'));
-        ui.btnProvas.addEventListener('click', () => handleLoginAndShowModal('exam'));
-        
-        // --- NOVO: Event Listener para o Botão de Debug ---
-        ui.btnDebug.addEventListener('click', () => {
-            if (appState.data && appState.data.tarefas) {
-                // Filtra apenas os campos que nos interessam para a depuração
-                const relevantData = appState.data.tarefas.map(task => ({
-                    id: task.id,
-                    title: task.title,
-                    type: task.type, // O tipo que a nossa API classificou
-                    answer_status: task.answer_status,
-                    task_expired: task.task_expired,
-                    is_exam: task.is_exam, // Propriedade original
-                    tags: task.tags // Propriedade original
-                }));
-                ui.debugOutput.textContent = JSON.stringify(relevantData, null, 2);
-            } else {
-                ui.debugOutput.textContent = "Nenhum dado de tarefa para mostrar. Faz o login primeiro.";
-            }
-            ui.debugOutput.classList.toggle('hidden');
-        });
+        const handleAutomation = async (submissionStatus = 'submitted') => {
+            const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
+            if (selectedCheckboxes.length === 0) { alert('Por favor, selecione pelo menos uma tarefa.'); return; }
+            ui.btnStartAutomation.disabled = true; ui.btnSaveDraft.disabled = true;
+            
+            const minSeconds = parseFloat(ui.minTimeInput.value) || 90;
+            const maxSeconds = parseFloat(ui.maxTimeInput.value) || 300;
 
+            for (const checkbox of selectedCheckboxes) {
+                const taskId = checkbox.dataset.taskId; const htmlId = checkbox.id;
+                const taskData = appState.data.tarefas.find(t => t.id == taskId);
+                if (!taskData) { updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)'); continue; }
+                try {
+                    updateTaskStatus(htmlId, '1/2: Obtendo gabarito...', 'var(--placeholder-color)');
+                    const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
+                    const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
+                    const answersData = await answersResponse.json();
+                    if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
+                    
+                    updateTaskStatus(htmlId, '2/2: Enviando respostas...', 'var(--placeholder-color)');
+                    const duration = (Math.random() * (maxSeconds - minSeconds) + minSeconds).toFixed(2);
+                    const officialPayload = { status: submissionStatus, answers: answersData.answers, accessed_on: "room", executed_on: taskData.publication_target, duration: duration };
+                    const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
+                    const submitData = await submitResponse.json();
+                    if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
+                    
+                    const scoreInfo = submitData.result_score !== undefined ? `Nota: ${submitData.result_score}` : '';
+                    const finalStatus = submitData.status === 'finished' ? `Finalizado! ${scoreInfo} ✔️` : 'Rascunho Salvo! ✔️';
+                    updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
+                } catch (error) { updateTaskStatus(htmlId, `Erro`, 'var(--red-color)'); }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            ui.btnStartAutomation.disabled = false; ui.btnSaveDraft.disabled = false;
+        };
+
+        ui.btnTarefas.addEventListener('click', handleLoginAndShowModal);
         ui.togglePassword.addEventListener('click', () => { const icon = ui.togglePassword.querySelector('i'); if (ui.senhaInput.type === 'password') { ui.senhaInput.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } else { ui.senhaInput.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); } });
         ui.modalCloseBtn.addEventListener('click', () => showModal(false));
         ui.selectionModal.addEventListener('click', (e) => { if (e.target === ui.selectionModal) showModal(false); });
+        ui.selectAllCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked); });
+        ui.btnStartAutomation.addEventListener('click', () => handleAutomation('submitted'));
+        ui.btnSaveDraft.addEventListener('click', () => handleAutomation('draft'));
     });
     </script>
 </body>
