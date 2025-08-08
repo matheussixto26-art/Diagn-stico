@@ -1,5 +1,4 @@
 const axios = require('axios');
-const { URLSearchParams } = require('url');
 
 async function fetchApiData(requestConfig) {
     try {
@@ -11,24 +10,16 @@ async function fetchApiData(requestConfig) {
     }
 }
 
-// Função para classificar o tipo de atividade - VERSÃO CORRIGIDA E MELHORADA
 function classifyTask(task) {
     const title = (task.title || '').toLowerCase();
     const tags = task.tags || [];
-
-    // Prioridade 1: Redações são muito específicas
     if (tags.some(tag => tag.toLowerCase().includes('redacaopaulista')) || title.includes('redação')) {
         return 'essay';
     }
-
-    // Prioridade 2: Provas
-    // Verificamos o booleano 'is_exam', palavras no título, OU palavras nas tags.
     const isProvaByTag = tags.some(tag => tag.toLowerCase().includes('prova'));
     if (task.is_exam === true || title.includes('prova') || title.includes('avaliação') || isProvaByTag) {
         return 'exam';
     }
-
-    // Se não for nenhum dos acima, é uma tarefa.
     return 'task';
 }
 
@@ -56,27 +47,22 @@ module.exports = async (req, res) => {
         
         const roomUserData = await fetchApiData({ method: 'get', url: 'https://edusp-api.ip.tv/room/user?list_all=true', headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } });
         
-        const baseUrl = 'https://edusp-api.ip.tv/tms/task/todo';
-        const baseParams = new URLSearchParams({ limit: 150, with_answer: true });
+        // --- VOLTANDO AO MÉTODO ANTIGO E ESTÁVEL DE MONTAR A URL ---
+        let publicationTargetsQuery = '';
         if (roomUserData && roomUserData.rooms) {
             const targets = roomUserData.rooms.flatMap(room => [room.publication_target, room.name, ...(room.group_categories?.map(g => g.id) || [])]);
+            // A correção essencial: filtrar os valores "vazios"
             const cleanedTargets = [...new Set(targets)].filter(Boolean);
-            cleanedTargets.forEach(target => baseParams.append('publication_target[]', target));
+            publicationTargetsQuery = cleanedTargets.map(target => `publication_target[]=${encodeURIComponent(target)}`).join('&');
         }
-
-        const pendingParams = new URLSearchParams(baseParams);
-        pendingParams.set('expired_only', false);
-        pendingParams.append('answer_statuses', 'pending');
-        pendingParams.append('answer_statuses', 'draft');
-
-        const expiredParams = new URLSearchParams(baseParams);
-        expiredParams.set('expired_only', true);
-        expiredParams.append('answer_statuses', 'pending');
-        expiredParams.append('answer_statuses', 'draft');
+        
+        const baseTaskUrl = `https://edusp-api.ip.tv/tms/task/todo?limit=150&with_answer=true&${publicationTargetsQuery}`;
+        const pendingTasksUrl = `${baseTaskUrl}&expired_only=false&answer_statuses=pending&answer_statuses=draft`;
+        const expiredTasksUrl = `${baseTaskUrl}&expired_only=true&answer_statuses=pending&answer_statuses=draft`;
 
         const requests = [
-             fetchApiData({ method: 'get', url: `${baseUrl}?${pendingParams.toString()}`, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
-             fetchApiData({ method: 'get', url: `${baseUrl}?${expiredParams.toString()}`, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
+             fetchApiData({ method: 'get', url: pendingTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
+             fetchApiData({ method: 'get', url: expiredTasksUrl, headers: { "x-api-key": tokenB, "Referer": "https://saladofuturo.educacao.sp.gov.br/" } }),
         ];
         const [pendingTasks, expiredTasks] = await Promise.all(requests);
 
@@ -90,9 +76,10 @@ module.exports = async (req, res) => {
 
         const dashboardData = { tokenB, tarefas: classifiedTasks };
         res.status(200).json(dashboardData);
+
     } catch (error) {
         console.error("--- ERRO FATAL NA FUNÇÃO /api/login ---", error);
         res.status(500).json({ error: 'Ocorreu um erro fatal no servidor ao processar o login.', details: error.message });
     }
 };
-                      
+                                             
