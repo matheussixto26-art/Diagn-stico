@@ -3,315 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperReda V1</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Finituss | Automatizador de Tarefas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #2E2238;
-            --card-color: #4C3A54;
-            --input-color: #3B2C42;
-            --primary-text: #EAE0F0;
-            --secondary-text: #C8A2C8;
-            --accent-color: #D8BFD8;
-            --button-text: #2E2238;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--primary-text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background-color: var(--card-color);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent-color);
-            text-align: center;
-            margin: 0 0 5px 0;
-        }
-        
-        h2 {
-            font-size: 1rem;
-            font-weight: 400;
-            color: var(--secondary-text);
-            text-align: center;
-            margin: 0 0 25px 0;
-            border-bottom: 1px solid var(--input-color);
-            padding-bottom: 25px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: var(--secondary-text);
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--input-color);
-            border-radius: 8px;
-            background-color: var(--input-color);
-            color: var(--primary-text);
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-        }
-        
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--accent-color);
-            color: var(--button-text);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-top: 15px;
-        }
-
-        button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            color: #888;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #E6D2E6;
-        }
-        
-        button:active:not(:disabled) {
-            transform: scale(0.98);
-        }
-
-        p.status { text-align: center; margin-top: 20px; font-style: italic; min-height: 20px; color: var(--secondary-text); }
-        
-        #essay-section { display: none; }
-        
-        #essayList { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
-        
-        #essayList li {
-            background-color: var(--input-color);
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-
-        #essayList li.selected {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-        
-        #generated-title-display {
-            color: var(--accent-color);
-            font-style: italic;
-            min-height: 24px;
-            font-size: 1rem;
-            margin: 15px 0 5px 0;
-            text-align: center;
-        }
+        :root { --background-color: #4b365e; --container-color: #5f4575; --input-bg-color: #4b365e; --text-color: #f0e6f2; --placeholder-color: #bca9c5; --accent-color: #e886a3; --border-color: #7c619c; --green-color: #23d183; --red-color: #e53965; --orange-color: #f77829; --blue-color: #388bfd;}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--background-color); background-image: url('https://www.transparenttextures.com/patterns/spooky.png'); color: var(--text-color); font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .hidden { display: none !important; }
+        .login-container { background-color: var(--container-color); padding: 40px 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .login-container h1 { font-size: 4em; }
+        .input-wrapper { position: relative; margin-bottom: 20px; }
+        .input-wrapper input { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; background-color: var(--input-bg-color); color: var(--text-color); font-size: 1rem; }
+        .input-wrapper .toggle-password { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--placeholder-color); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; margin-top: 10px; }
+        .btn-primary { background-color: var(--accent-color); border: 1px solid #d16d8a; }
+        .btn-secondary { background-color: var(--container-color); border: 1px solid var(--border-color); }
+        .btn:disabled { background-color: #555 !important; cursor: not-allowed; opacity: 0.6; }
+        #login-message { margin-top: 20px; min-height: 20px; color: var(--red-color); font-weight: 500; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.is-visible { opacity: 1; pointer-events: all; }
+        .modal-content { background-color: var(--container-color); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative; border: 1px solid var(--border-color); display: flex; flex-direction: column;}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-close { background: rgba(0,0,0,0.2); border: none; color: var(--text-color); font-size: 1.2em; cursor: pointer; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; text-align: center; }
+        .activity-list { list-style: none; margin-bottom: 20px; flex-grow: 1; overflow-y: auto; min-height: 100px;}
+        .activity-item { background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
+        .activity-item label { cursor: pointer; display: flex; align-items: center; width: 100%; }
+        .custom-checkbox { width: 20px; height: 20px; background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; margin-right: 15px; display: inline-block; position: relative; flex-shrink: 0; }
+        .activity-item input:checked + label .custom-checkbox { background-color: var(--accent-color); border-color: var(--accent-color); }
+        .custom-checkbox::after { content: '✓'; font-size: 16px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s ease; }
+        .activity-item input:checked + label .custom-checkbox::after { transform: translate(-50%, -50%) scale(1); }
+        .task-content { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; }
+        .task-tags { display: flex; margin-top: 5px; }
+        .tag { padding: 3px 8px; border-radius: 10px; font-size: 0.75em; margin-right: 5px; font-weight: 600; }
+        .tag.expirada { background-color: var(--orange-color); color: white; }
+        .tag.rascunho { background-color: var(--blue-color); color: white; }
+        .config-group { display: flex; justify-content: space-between; align-items: center; background-color: var(--input-bg-color); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .config-group input { width: 100px; background: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 5px; border-radius: 5px; text-align: center; font-size: 1rem; }
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="login-section">
-            <h1>HyperReda V1</h1>
-            <h2>para Sala do Futuro</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="ra">RA + dígito + sp</label>
-                    <input type="text" id="ra" name="user" placeholder="ex: 000123456789sp" required>
-                </div>
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" placeholder="Sua senha da SED" required>
-                </div>
-                <button type="submit" id="loginButton">Conectar</button>
+    <main id="login-screen">
+        <div class="login-container"><h1>Finituss</h1>
+            <form id="login-form">
+                <div class="input-wrapper"><input type="text" id="ra" placeholder="RA + dígito + sp" required></div>
+                <div class="input-wrapper"><input type="password" id="senha" placeholder="Sua senha" required><span class="toggle-password"><i class="fa fa-eye"></i></span></div>
+                <button type="button" id="btn-tarefas" class="btn btn-secondary">Buscar Atividades</button>
             </form>
-            <p id="status" class="status"></p>
+            <div id="login-message"></div>
         </div>
-
-        <div id="essay-section">
-            <h2>Selecione a Redação</h2>
-            <ul id="essayList"></ul>
-            <h4 id="generated-title-display"></h4>
-            <textarea id="essayText" placeholder="O texto da IA aparecerá aqui..." style="min-height: 200px;"></textarea>
-            <button id="generateEssayButton" disabled>Gerar Redação com IA 🤖</button>
-            <button id="submitEssayButton" disabled>Salvar Rascunho</button>
-            <p id="submissionStatus" class="status"></p>
+    </main>
+    <div id="selection-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Selecionar Tarefas</h2><button class="modal-close">&times;</button></div>
+            <ul class="activity-list" id="activity-list-container"><li class="activity-item"><input type="checkbox" id="select-all"><label for="select-all"><span class="custom-checkbox"></span>Selecionar Todas</label></li></ul>
+            <div class="config-group"><label for="time-input">Duração da Tarefa (segundos)</label><input type="number" id="time-input" value="600" min="1"></div>
+            <div class="action-buttons">
+                 <button id="btn-start-automation" class="btn btn-primary">Fazer Selecionadas</button>
+                 <button id="btn-save-draft" class="btn btn-secondary">Salvar como Rascunho</button>
+            </div>
         </div>
     </div>
+    <div id="loading-overlay" class="hidden"><h2 style="color:white; font-size: 1.5em;">Aguarde...</h2></div>
+        <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const appState = { data: null, tokenB: null };
+        const ui = { 
+            raInput: document.getElementById('ra'),
+            senhaInput: document.getElementById('senha'),
+            togglePassword: document.querySelector('.toggle-password'),
+            loginMessage: document.getElementById('login-message'),
+            btnTarefas: document.getElementById('btn-tarefas'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            selectionModal: document.getElementById('selection-modal'),
+            activityListContainer: document.getElementById('activity-list-container'),
+            selectAllCheckbox: document.getElementById('select-all'),
+            modalCloseBtn: document.querySelector('.modal-close'),
+            timeInput: document.getElementById('time-input'),
+            btnStartAutomation: document.getElementById('btn-start-automation'),
+            btnSaveDraft: document.getElementById('btn-save-draft')
+        };
+        
+        const showLoading = (show) => ui.loadingOverlay.classList.toggle('hidden', !show);
+        const showModal = (show) => ui.selectionModal.classList.toggle('is-visible', show);
 
-    <script>
-        let tokenB = null;
-        let essays = [];
-        let selectedTask = { id: null, details: null, fullData: null, generatedTitle: null };
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const statusEl = document.getElementById('status');
-            const loginButton = document.getElementById('loginButton');
-            statusEl.textContent = 'Conectando...';
-            loginButton.disabled = true;
-            try {
-                const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: e.target.user.value, senha: e.target.senha.value }) });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
-                
-                tokenB = data.tokenB;
-                essays = data.tarefas; 
-                
-                document.getElementById('login-section').style.display = 'none';
-                displayEssays();
-            } catch (err) { 
-                statusEl.textContent = `Falha: ${err.message}`; 
-            } finally {
-                loginButton.disabled = false;
+        const updateTaskStatus = (htmlId, message, color) => {
+            const label = document.querySelector(`label[for="${htmlId}"]`);
+            if (!label) return;
+            let statusSpan = label.querySelector('.status-span');
+            if (!statusSpan) {
+                statusSpan = document.createElement('span');
+                statusSpan.className = 'status-span';
+                statusSpan.style.marginLeft = 'auto';
+                statusSpan.style.fontWeight = '500';
+                const contentWrapper = label.querySelector('.task-content');
+                if (contentWrapper) contentWrapper.appendChild(statusSpan);
             }
-        });
+            statusSpan.textContent = message;
+            statusSpan.style.color = color;
+        };
+        
+        const handleLoginAndShowModal = async () => {
+            ui.loginMessage.textContent = '';
+            showLoading(true);
+            try {
+                const credentials = { user: ui.raInput.value, senha: ui.senhaInput.value };
+                const loginResponse = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) });
+                const loginData = await loginResponse.json();
+                if (!loginResponse.ok) throw new Error(loginData.error || 'Falha no Login');
+                appState.data = loginData;
+                appState.tokenB = loginData.tokenB;
+                populateSelectionModal();
+                showModal(true);
+            } catch (error) {
+                ui.loginMessage.textContent = `❌ ${error.message}`;
+            } finally {
+                showLoading(false);
+            }
+        };
 
-        function displayEssays() {
-            const essaySection = document.getElementById('essay-section');
-            const essayList = document.getElementById('essayList');
-            const now = new Date();
-            const availableEssays = essays.filter(t => 
-                t.is_essay === true &&
-                t.answer_id !== null && 
-                t.answer_status !== 'pending' &&
-                new Date(t.publish_at) <= now && 
-                new Date(t.expire_at) > now
-            );
-            
-            essaySection.style.display = 'block';
-            if (availableEssays.length === 0) {
-                essayList.innerHTML = '<li>Nenhuma redação válida e iniciada (com rascunho) encontrada.</li>';
+        const populateSelectionModal = () => {
+            const items = ui.activityListContainer.querySelectorAll('.activity-item:not(:first-child)');
+            items.forEach(item => item.remove());
+            const tasksToDisplay = appState.data.tarefas?.filter(t => t.answer_status !== 'submitted');
+            if (tasksToDisplay && tasksToDisplay.length > 0) {
+                tasksToDisplay.forEach(task => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'activity-item';
+                    const htmlId = `task-${task.id}`;
+                    let tags = '';
+                    if (task.task_expired) tags += '<span class="tag expirada">EXPIRADA</span>';
+                    if (task.answer_status === 'draft') tags += '<span class="tag rascunho">RASCUNHO</span>';
+                    listItem.innerHTML = `<input type="checkbox" id="${htmlId}" class="task-checkbox" data-task-id="${task.id}"><label for="${htmlId}"><span class="custom-checkbox"></span><div class="task-content"><span class="task-title">${task.title}</span><div class="task-tags">${tags}</div></div></label>`;
+                    ui.activityListContainer.appendChild(listItem);
+                });
+            } else {
+                const noItem = document.createElement('li');
+                noItem.className = 'activity-item';
+                noItem.innerHTML = `<p>Nenhuma tarefa encontrada.</p>`;
+                ui.activityListContainer.appendChild(noItem);
+            }
+        };
+
+        const handleAutomation = async (submissionStatus = 'submitted') => {
+            const selectedCheckboxes = document.querySelectorAll('.task-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('Por favor, selecione pelo menos uma tarefa.');
                 return;
             }
-            essayList.innerHTML = availableEssays.map(essay => `<li data-task-id="${essay.id}">${essay.title}</li>`).join('');
-            document.querySelectorAll('#essayList li').forEach(li => li.addEventListener('click', handleEssaySelection));
-        }
+            ui.btnStartAutomation.disabled = true;
+            ui.btnSaveDraft.disabled = true;
 
-        async function handleEssaySelection(event) {
-            const li = event.currentTarget;
-            const taskId = li.dataset.taskId;
-            document.querySelectorAll('#essayList li').forEach(item => item.classList.remove('selected'));
-            li.classList.add('selected');
+            const durationInSeconds = parseInt(ui.timeInput.value) || 600;
 
-            const taskData = essays.find(t => t.id == taskId);
-            if (!taskData) { alert('Erro: dados da tarefa não encontrados.'); return; }
-
-            selectedTask = { id: taskId, details: null, fullData: taskData, generatedTitle: null };
-            document.getElementById('generateEssayButton').disabled = true;
-            document.getElementById('submitEssayButton').disabled = true;
-            document.getElementById('generated-title-display').textContent = '';
-            document.getElementById('essayText').value = '';
-
-            const statusEl = document.getElementById('submissionStatus');
-            statusEl.textContent = 'Buscando proposta completa... 📚';
-
-            try {
-                const res = await fetch('/api/get-essay-details', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ tokenB, taskId, answerId: taskData.answer_id, publicationTarget: taskData.publication_target }) 
-                });
-                const details = await res.json();
-                if (!res.ok) throw new Error(details.error || 'Não foi possível carregar os detalhes.');
+            selectedCheckboxes.forEach(checkbox => {
+                const taskId = checkbox.dataset.taskId;
+                const htmlId = checkbox.id;
+                const taskData = appState.data.tarefas.find(t => t.id == taskId);
                 
-                selectedTask.details = details;
-                statusEl.textContent = 'Proposta carregada! Clique para gerar.';
-                document.getElementById('generateEssayButton').disabled = false;
-            } catch (err) {
-                statusEl.textContent = `Falha ao buscar detalhes: ${err.message}`;
+                if (!taskData) {
+                    updateTaskStatus(htmlId, 'Erro: Dados não encontrados', 'var(--red-color)');
+                    return;
+                }
+                
+                executeSingleTask(taskData, htmlId, submissionStatus, durationInSeconds);
+            });
+
+            setTimeout(() => {
+                ui.btnStartAutomation.disabled = false;
+                ui.btnSaveDraft.disabled = false;
+            }, 2000);
+        };
+
+        async function executeSingleTask(taskData, htmlId, submissionStatus, duration) {
+            try {
+                updateTaskStatus(htmlId, '1/3: Obtendo gabarito...', 'var(--placeholder-color)');
+                const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target };
+                const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
+                const answersData = await answersResponse.json();
+                if (!answersResponse.ok) throw new Error(`Gabarito: ${answersData.error}`);
+                
+                let timeLeft = duration;
+                updateTaskStatus(htmlId, `2/3: Aguardando ${timeLeft}s...`, 'var(--blue-color)');
+                
+                const timerInterval = setInterval(() => {
+                    timeLeft--;
+                    if(timeLeft >= 0) {
+                         updateTaskStatus(htmlId, `2/3: Aguardando ${timeLeft}s...`, 'var(--blue-color)');
+                    }
+                }, 1000);
+
+                await new Promise(resolve => setTimeout(resolve, duration * 1000));
+                clearInterval(timerInterval);
+
+                updateTaskStatus(htmlId, '3/3: Enviando respostas...', 'var(--placeholder-color)');
+                const officialPayload = { status: submissionStatus, answers: answersData.answers, accessed_on: "room", executed_on: taskData.publication_target, duration: duration };
+                const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
+                const submitData = await submitResponse.json();
+                if (!submitResponse.ok) throw new Error(`Submissão: ${submitData.error || JSON.stringify(submitData.details)}`);
+                
+                const scoreInfo = submitData.result_score !== undefined ? `Nota: ${submitData.result_score}` : '';
+                const finalStatus = submitData.status === 'finished' ? `Finalizado! ${scoreInfo} ✔️` : 'Rascunho Salvo! ✔️';
+                updateTaskStatus(htmlId, finalStatus, 'var(--green-color)');
+
+            } catch (error) {
+                updateTaskStatus(htmlId, `Erro: ${error.message.substring(0, 30)}...`, 'var(--red-color)');
             }
         }
-
-        document.getElementById('generateEssayButton').addEventListener('click', async () => {
-             if (!selectedTask.id || !selectedTask.details) return;
-            const statusEl = document.getElementById('submissionStatus');
-            const genButton = document.getElementById('generateEssayButton');
-            statusEl.textContent = 'IA escrevendo redação e título... 🤖⏳';
-            genButton.disabled = true;
-            try {
-                const res = await fetch('/api/generate-essay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptData: selectedTask.details }) });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.details || data.error);
-
-                selectedTask.generatedTitle = data.essayTitle;
-                document.getElementById('essayText').value = data.essayBody;
-                document.getElementById('generated-title-display').textContent = `"${data.essayTitle}"`;
-                
-                statusEl.textContent = 'Texto e título gerados! ✅';
-                document.getElementById('submitEssayButton').disabled = false;
-            } catch (err) {
-                statusEl.textContent = `Erro da IA: ${err.message} ❌`;
-            } finally {
-                genButton.disabled = false;
+        
+        // --- Event Listeners ---
+        ui.btnTarefas.addEventListener('click', handleLoginAndShowModal);
+        
+        ui.togglePassword.addEventListener('click', () => {
+            const icon = ui.togglePassword.querySelector('i');
+            if (ui.senhaInput.type === 'password') {
+                ui.senhaInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                ui.senhaInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
         });
-
-        document.getElementById('submitEssayButton').addEventListener('click', async () => {
-            const essayText = document.getElementById('essayText').value;
-            const statusEl = document.getElementById('submissionStatus');
-            if (!selectedTask.id || !essayText.trim()) return;
-            
-            statusEl.textContent = 'Salvando rascunho... 🚀';
-            const submitBtn = document.getElementById('submitEssayButton');
-            submitBtn.disabled = true;
-            try {
-                const res = await fetch('/api/submit-essay', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        tokenB: tokenB, 
-                        taskId: selectedTask.id, 
-                        answerId: selectedTask.fullData.answer_id,
-                        questionId: selectedTask.details.questionId,
-                        essayText: essayText, 
-                        essayTitle: selectedTask.generatedTitle,
-                        executedOn: selectedTask.fullData.publication_target
-                    }) 
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.details?.message || data.error);
-                statusEl.textContent = 'Rascunho salvo com sucesso! 🎉';
-            } catch (err) {
-                statusEl.textContent = `Falha ao salvar: ${err.message} ❌`;
-            } finally {
-                submitBtn.disabled = false;
-            }
+        
+        ui.modalCloseBtn.addEventListener('click', () => showModal(false));
+        
+        ui.selectionModal.addEventListener('click', (e) => {
+            if (e.target === ui.selectionModal) showModal(false);
         });
-    </script>
-</body>
-</html>
+        
+        ui.selectAllCheckbox.addEventListener('change', (e) => {
+            document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = e.target.checked);
+        });
+        
+        ui.btnStartAutomation.addEventListener('click', () => handleAutomation('submitted'));
+        ui.btnSaveDraft.addEventListener('click', () => handleAutomation('draft'));
+    });
+        </script>
+        
