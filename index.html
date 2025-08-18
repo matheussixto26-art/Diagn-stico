@@ -3,315 +3,467 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperReda V1</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Assistente de Tarefas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
     <style>
-        :root {
-            --bg-color: #2E2238;
-            --card-color: #4C3A54;
-            --input-color: #3B2C42;
-            --primary-text: #EAE0F0;
-            --secondary-text: #C8A2C8;
-            --accent-color: #D8BFD8;
-            --button-text: #2E2238;
+        /* Importando uma fonte para deixar mais agradável */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        /* Estilos Gerais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--primary-text);
-            margin: 0;
-            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+
+        #container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            color: #4a4a4a;
+        }
+
+        header i {
+            color: #6a11cb;
+        }
+
+        /* Estilos da Lista de Tarefas */
+        #lista-tarefas {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tarefa {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tarefa:hover {
+            border-color: #6a11cb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .tarefa-info h3 {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tipo-tarefa {
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        .tempo-restante {
+            font-weight: 600;
+            color: #333;
+            margin-top: 8px;
+        }
+
+        .tempo-expirado {
+            color: #d93025;
+            font-weight: bold;
+        }
+
+        /* Etiquetas de Status */
+        .status {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .status-pendente { background-color: #ff9800; }
+        .status-rascunho { background-color: #2196f3; }
+        .status-concluida { background-color: #4caf50; }
+        .status-expirada { background-color: #d93025; }
+        .status-resolvendo { background-color: #6a11cb; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+
+        /* Botão e Ação */
+        .btn-fazer {
+            padding: 10px 16px;
+            border: none;
+            background-color: #6a11cb;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-fazer:hover {
+            background-color: #5a0eae;
+        }
+
+        /* Barra de Progresso e Animação */
+        .progresso-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        .barra-progresso {
+            width: 0%; /* Começa em 0 */
+            height: 10px;
+            background-color: #4caf50;
+            border-radius: 4px;
+            transition: width 0.5s ease-out;
+        }
+        .galinha-falando {
+            font-style: normal;
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 8px;
+        }
+
+
+        /* Estilos do Modal */
+        .modal-oculto {
+            display: none !important; /* Usamos !important para garantir que vai esconder */
+        }
+        #modal-nota {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
         }
-
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background-color: var(--card-color);
+        .modal-conteudo {
+            background-color: #fff;
             padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent-color);
-            text-align: center;
-            margin: 0 0 5px 0;
-        }
-        
-        h2 {
-            font-size: 1rem;
-            font-weight: 400;
-            color: var(--secondary-text);
-            text-align: center;
-            margin: 0 0 25px 0;
-            border-bottom: 1px solid var(--input-color);
-            padding-bottom: 25px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: var(--secondary-text);
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--input-color);
             border-radius: 8px;
-            background-color: var(--input-color);
-            color: var(--primary-text);
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
         }
-        
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
+        .modal-fechar {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
         }
-
-        button {
+        #seletor-nota, #btn-confirmar-nota {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        #btn-confirmar-nota {
+            background-color: #4caf50;
+            color: white;
             border: none;
-            border-radius: 8px;
-            background-color: var(--accent-color);
-            color: var(--button-text);
-            font-size: 1rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-top: 15px;
         }
-
-        button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            color: #888;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #E6D2E6;
-        }
-        
-        button:active:not(:disabled) {
-            transform: scale(0.98);
-        }
-
-        p.status { text-align: center; margin-top: 20px; font-style: italic; min-height: 20px; color: var(--secondary-text); }
-        
-        #essay-section { display: none; }
-        
-        #essayList { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
-        
-        #essayList li {
-            background-color: var(--input-color);
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-
-        #essayList li.selected {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-        
-        #generated-title-display {
-            color: var(--accent-color);
-            font-style: italic;
-            min-height: 24px;
-            font-size: 1rem;
-            margin: 15px 0 5px 0;
-            text-align: center;
+        #btn-confirmar-nota:hover {
+            background-color: #45a049;
         }
     </style>
-</head>
+    </head>
 <body>
-    <div class="container">
-        <div id="login-section">
-            <h1>HyperReda V1</h1>
-            <h2>para Sala do Futuro</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="ra">RA + dígito + sp</label>
-                    <input type="text" id="ra" name="user" placeholder="ex: 000123456789sp" required>
-                </div>
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" placeholder="Sua senha da SED" required>
-                </div>
-                <button type="submit" id="loginButton">Conectar</button>
-            </form>
-            <p id="status" class="status"></p>
-        </div>
 
-        <div id="essay-section">
-            <h2>Selecione a Redação</h2>
-            <ul id="essayList"></ul>
-            <h4 id="generated-title-display"></h4>
-            <textarea id="essayText" placeholder="O texto da IA aparecerá aqui..." style="min-height: 200px;"></textarea>
-            <button id="generateEssayButton" disabled>Gerar Redação com IA 🤖</button>
-            <button id="submitEssayButton" disabled>Salvar Rascunho</button>
-            <p id="submissionStatus" class="status"></p>
+    <div id="container">
+        <header>
+            <h1><i class="fa-solid fa-robot"></i> Seu Parceiro de Programação</h1>
+            <p>Gerencie e automatize suas tarefas escolares.</p>
+        </header>
+
+        <main>
+            <section id="lista-tarefas">
+                </section>
+        </main>
+    </div>
+
+    <div id="modal-nota" class="modal-oculto">
+        <div class="modal-conteudo">
+            <span class="modal-fechar">&times;</span>
+            <h2>Definir Nota da Tarefa</h2>
+            <p id="modal-titulo-tarefa">Título da Tarefa Aqui</p>
+            <p>Esta tarefa vale <strong id="modal-nota-maxima">40</strong> pontos.</p>
+            <label for="seletor-nota">Qual nota você deseja tirar?</label>
+            <select id="seletor-nota">
+                </select>
+            <button id="btn-confirmar-nota">Confirmar e Fazer Tarefa</button>
         </div>
     </div>
 
+
     <script>
-        let tokenB = null;
-        let essays = [];
-        let selectedTask = { id: null, details: null, fullData: null, generatedTitle: null };
+        // Espera todo o HTML ser carregado para começar a executar o script
+        document.addEventListener('DOMContentLoaded', () => {
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const statusEl = document.getElementById('status');
-            const loginButton = document.getElementById('loginButton');
-            statusEl.textContent = 'Conectando...';
-            loginButton.disabled = true;
-            try {
-                const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: e.target.user.value, senha: e.target.senha.value }) });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
-                
-                tokenB = data.tokenB;
-                essays = data.tarefas; 
-                
-                document.getElementById('login-section').style.display = 'none';
-                displayEssays();
-            } catch (err) { 
-                statusEl.textContent = `Falha: ${err.message}`; 
-            } finally {
-                loginButton.disabled = false;
-            }
-        });
+            // 1. NOSSO BANCO DE DADOS E SELETORES DE ELEMENTOS HTML
+            let bancoDeDadosDeTarefas = [
+                {
+                    id: 1,
+                    titulo: "Exercício de Matemática",
+                    tipo: "tarefa",
+                    status: "rascunho", // Pode ser 'rascunho', 'pendente', 'resolvendo', 'concluida', 'expirada'
+                    perguntas: ["2+2", "10*5", "30/3", "4^2"],
+                    notaMaxima: 40,
+                    dataEntrega: "2025-08-10T23:59:00" // Formato: ANO-MES-DIAThoras:minutos:segundos
+                },
+                {
+                    id: 2,
+                    titulo: "Prova Mensal de Biologia",
+                    tipo: "prova",
+                    status: "pendente",
+                    perguntas: ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"],
+                    notaMaxima: 100,
+                    dataEntrega: "2025-08-08T18:00:00"
+                },
+                {
+                    id: 3,
+                    titulo: "Redação sobre IA",
+                    tipo: "redacao",
+                    status: "pendente",
+                    perguntas: ["Tema: O futuro da Inteligência Artificial"],
+                    notaMaxima: 100,
+                    dataEntrega: "2025-09-01T23:59:00"
+                },
+                {
+                    id: 4,
+                    titulo: "Trabalho de História Antiga",
+                    tipo: "tarefa",
+                    status: "pendente",
+                    perguntas: ["P1", "P2", "P3"],
+                    notaMaxima: 30,
+                    dataEntrega: "2025-08-07T20:00:00" // Expirou às 20h de hoje
+                }
+            ];
 
-        function displayEssays() {
-            const essaySection = document.getElementById('essay-section');
-            const essayList = document.getElementById('essayList');
-            const now = new Date();
-            const availableEssays = essays.filter(t => 
-                t.is_essay === true &&
-                t.answer_id !== null && 
-                t.answer_status !== 'pending' &&
-                new Date(t.publish_at) <= now && 
-                new Date(t.expire_at) > now
-            );
+            const listaTarefasContainer = document.getElementById('lista-tarefas');
+            const modal = document.getElementById('modal-nota');
+            const modalTitulo = document.getElementById('modal-titulo-tarefa');
+            const modalNotaMaxima = document.getElementById('modal-nota-maxima');
+            const seletorNota = document.getElementById('seletor-nota');
+            const btnConfirmarNota = document.getElementById('btn-confirmar-nota');
+            const btnFecharModal = document.querySelector('.modal-fechar');
             
-            essaySection.style.display = 'block';
-            if (availableEssays.length === 0) {
-                essayList.innerHTML = '<li>Nenhuma redação válida e iniciada (com rascunho) encontrada.</li>';
-                return;
-            }
-            essayList.innerHTML = availableEssays.map(essay => `<li data-task-id="${essay.id}">${essay.title}</li>`).join('');
-            document.querySelectorAll('#essayList li').forEach(li => li.addEventListener('click', handleEssaySelection));
-        }
+            let tarefaAtualId = null;
 
-        async function handleEssaySelection(event) {
-            const li = event.currentTarget;
-            const taskId = li.dataset.taskId;
-            document.querySelectorAll('#essayList li').forEach(item => item.classList.remove('selected'));
-            li.classList.add('selected');
+            // 2. FUNÇÕES PRINCIPAIS DA APLICAÇÃO
+            const renderizarTarefas = () => {
+                listaTarefasContainer.innerHTML = ''; 
 
-            const taskData = essays.find(t => t.id == taskId);
-            if (!taskData) { alert('Erro: dados da tarefa não encontrados.'); return; }
+                bancoDeDadosDeTarefas.forEach(tarefa => {
+                    const tarefaDiv = document.createElement('div');
+                    tarefaDiv.className = 'tarefa';
+                    tarefaDiv.setAttribute('data-id', tarefa.id);
 
-            selectedTask = { id: taskId, details: null, fullData: taskData, generatedTitle: null };
-            document.getElementById('generateEssayButton').disabled = true;
-            document.getElementById('submitEssayButton').disabled = true;
-            document.getElementById('generated-title-display').textContent = '';
-            document.getElementById('essayText').value = '';
+                    // Verifica o status para aplicar o estilo correto
+                    let statusClass = `status-${tarefa.status}`;
+                    let statusText = tarefa.status.charAt(0).toUpperCase() + tarefa.status.slice(1);
+                    if (tarefa.status === 'rascunho') statusText = 'Em Rascunho';
 
-            const statusEl = document.getElementById('submissionStatus');
-            statusEl.textContent = 'Buscando proposta completa... 📚';
+                    let conteudoInterno = `
+                        <div class="tarefa-info">
+                            <h3>
+                                ${tarefa.titulo} 
+                                <span class="status ${statusClass}">${statusText}</span>
+                            </h3>
+                            <p class="tipo-tarefa">Tipo: ${tarefa.tipo}</p>
+                            <p class="tempo-restante" id="tempo-${tarefa.id}">Calculando tempo...</p>
+                            <div id="progresso-${tarefa.id}"></div>
+                        </div>
+                        <div class="tarefa-acao">
+                            <button class="btn-fazer" data-id="${tarefa.id}">
+                                ${tarefa.status === 'rascunho' ? 'Refazer Tarefa' : 'Fazer Tarefa'}
+                            </button>
+                        </div>
+                    `;
+                    
+                    if (tarefa.status === 'concluida' || tarefa.status === 'expirada' || tarefa.status === 'resolvendo') {
+                        conteudoInterno = `
+                        <div class="tarefa-info">
+                            <h3>
+                                ${tarefa.titulo} 
+                                <span class="status ${statusClass}">${statusText}</span>
+                            </h3>
+                            <p class="tipo-tarefa">Tipo: ${tarefa.tipo}</p>
+                            <p class="tempo-restante" id="tempo-${tarefa.id}">-</p>
+                            <div id="progresso-${tarefa.id}"></div>
+                        </div>
+                        `;
+                    }
 
-            try {
-                const res = await fetch('/api/get-essay-details', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ tokenB, taskId, answerId: taskData.answer_id, publicationTarget: taskData.publication_target }) 
+                    tarefaDiv.innerHTML = conteudoInterno;
+                    listaTarefasContainer.appendChild(tarefaDiv);
                 });
-                const details = await res.json();
-                if (!res.ok) throw new Error(details.error || 'Não foi possível carregar os detalhes.');
                 
-                selectedTask.details = details;
-                statusEl.textContent = 'Proposta carregada! Clique para gerar.';
-                document.getElementById('generateEssayButton').disabled = false;
-            } catch (err) {
-                statusEl.textContent = `Falha ao buscar detalhes: ${err.message}`;
-            }
-        }
-
-        document.getElementById('generateEssayButton').addEventListener('click', async () => {
-             if (!selectedTask.id || !selectedTask.details) return;
-            const statusEl = document.getElementById('submissionStatus');
-            const genButton = document.getElementById('generateEssayButton');
-            statusEl.textContent = 'IA escrevendo redação e título... 🤖⏳';
-            genButton.disabled = true;
-            try {
-                const res = await fetch('/api/generate-essay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptData: selectedTask.details }) });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.details || data.error);
-
-                selectedTask.generatedTitle = data.essayTitle;
-                document.getElementById('essayText').value = data.essayBody;
-                document.getElementById('generated-title-display').textContent = `"${data.essayTitle}"`;
-                
-                statusEl.textContent = 'Texto e título gerados! ✅';
-                document.getElementById('submitEssayButton').disabled = false;
-            } catch (err) {
-                statusEl.textContent = `Erro da IA: ${err.message} ❌`;
-            } finally {
-                genButton.disabled = false;
-            }
-        });
-
-        document.getElementById('submitEssayButton').addEventListener('click', async () => {
-            const essayText = document.getElementById('essayText').value;
-            const statusEl = document.getElementById('submissionStatus');
-            if (!selectedTask.id || !essayText.trim()) return;
+                adicionarEventListenersAosBotoes();
+            };
             
-            statusEl.textContent = 'Salvando rascunho... 🚀';
-            const submitBtn = document.getElementById('submitEssayButton');
-            submitBtn.disabled = true;
-            try {
-                const res = await fetch('/api/submit-essay', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        tokenB: tokenB, 
-                        taskId: selectedTask.id, 
-                        answerId: selectedTask.fullData.answer_id,
-                        questionId: selectedTask.details.questionId,
-                        essayText: essayText, 
-                        essayTitle: selectedTask.generatedTitle,
-                        executedOn: selectedTask.fullData.publication_target
-                    }) 
+            const adicionarEventListenersAosBotoes = () => {
+                document.querySelectorAll('.btn-fazer').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        abrirModalNota(id);
+                    });
                 });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.details?.message || data.error);
-                statusEl.textContent = 'Rascunho salvo com sucesso! 🎉';
-            } catch (err) {
-                statusEl.textContent = `Falha ao salvar: ${err.message} ❌`;
-            } finally {
-                submitBtn.disabled = false;
-            }
+            };
+
+            const abrirModalNota = (id) => {
+                tarefaAtualId = parseInt(id);
+                const tarefa = bancoDeDadosDeTarefas.find(t => t.id === tarefaAtualId);
+                
+                modal.style.display = "flex"; // Mostra o modal
+                modalTitulo.textContent = tarefa.titulo;
+                modalNotaMaxima.textContent = tarefa.notaMaxima;
+                
+                seletorNota.innerHTML = '';
+                for(let i = 10; i <= tarefa.notaMaxima; i += 10) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Tirar ${i} de ${tarefa.notaMaxima}`;
+                    seletorNota.appendChild(option);
+                }
+                if (tarefa.notaMaxima % 10 !== 0) { // Garante que a nota máxima seja sempre uma opção
+                    const optionMax = document.createElement('option');
+                    optionMax.value = tarefa.notaMaxima;
+                    optionMax.textContent = `Tirar ${tarefa.notaMaxima} de ${tarefa.notaMaxima} (100%)`;
+                    seletorNota.appendChild(optionMax);
+                }
+                
+                modal.classList.remove('modal-oculto');
+            };
+
+            const fecharModal = () => {
+                modal.classList.add('modal-oculto');
+            };
+            
+            const iniciarResolucaoTarefa = () => {
+                const notaDesejada = parseInt(seletorNota.value);
+                const tarefa = bancoDeDadosDeTarefas.find(t => t.id === tarefaAtualId);
+
+                if (!tarefa) return;
+
+                fecharModal();
+
+                tarefa.status = 'resolvendo';
+                renderizarTarefas();
+
+                const progressoDiv = document.getElementById(`progresso-${tarefa.id}`);
+                progressoDiv.innerHTML = `
+                    <div class="galinha-falando">
+                        <i class="fa-solid fa-egg fa-spin"></i> Respondendo...
+                    </div>
+                    <div class="progresso-container">
+                        <div class="barra-progresso" id="barra-${tarefa.id}"></div>
+                    </div>
+                `;
+                const barraProgresso = document.getElementById(`barra-${tarefa.id}`);
+
+                let progresso = 0;
+                const tempoSimulacao = 2000 + Math.random() * 3000;
+
+                const intervalo = setInterval(() => {
+                    progresso += 10;
+                    barraProgresso.style.width = progresso + '%';
+                    
+                    if (progresso >= 100) {
+                        clearInterval(intervalo);
+                        tarefa.status = 'concluida';
+                        console.log(`Tarefa ${tarefa.id} concluída com a nota desejada de ${notaDesejada}.`);
+                        renderizarTarefas();
+                    }
+                }, tempoSimulacao / 10);
+            };
+
+            const atualizarTempos = () => {
+                const agora = new Date();
+
+                bancoDeDadosDeTarefas.forEach(tarefa => {
+                    const elementoTempo = document.getElementById(`tempo-${tarefa.id}`);
+                    if (!elementoTempo) return;
+
+                    const dataEntrega = new Date(tarefa.dataEntrega);
+                    const diff = dataEntrega - agora;
+
+                    if (tarefa.status === 'concluida' || tarefa.status === 'resolvendo') {
+                        elementoTempo.textContent = 'Finalizada';
+                        return;
+                    }
+                    
+                    if (diff > 0) {
+                        const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                        const minutos = Math.floor((diff / 1000 / 60) % 60);
+                        const segundos = Math.floor((diff / 1000) % 60);
+                        elementoTempo.textContent = `Tempo restante: ${dias}d ${horas}h ${minutos}m ${segundos}s`;
+                        elementoTempo.classList.remove('tempo-expirado');
+                    } else {
+                        elementoTempo.textContent = "TAREFA EXPIRADA";
+                        elementoTempo.classList.add('tempo-expirado');
+                        if (tarefa.status !== 'concluida') {
+                            tarefa.status = 'expirada';
+                        }
+                    }
+                });
+            };
+
+            // 3. INICIALIZAÇÃO E EVENTOS GLOBAIS
+            btnFecharModal.addEventListener('click', fecharModal);
+            btnConfirmarNota.addEventListener('click', iniciarResolucaoTarefa);
+            
+            renderizarTarefas();
+            setInterval(() => {
+                atualizarTempos();
+                // Re-renderizar se algum status mudou para 'expirada'
+                const algumaExpirou = bancoDeDadosDeTarefas.some(t => t.status === 'expirada' && !document.querySelector(`.tarefa[data-id='${t.id}'] .status-expirada`));
+                if (algumaExpirou) {
+                    renderizarTarefas();
+                }
+            }, 1000);
         });
     </script>
-</body>
+    </body>
 </html>
