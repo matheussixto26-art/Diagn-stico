@@ -10,9 +10,10 @@
         .tab-active { border-color: #3b82f6; background-color: #1e40af; }
         .log-entry { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .status-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; border-radius: 9999px; font-weight: 500; margin-left: 8px; }
+        .status-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; border-radius: 9999px; font-weight: 500; margin-left: auto; /* Alterado para alinhar à direita */ }
         .status-rascunho { background-color: #2563eb; color: white; }
         .status-expirada { background-color: #d97706; color: white; }
+        .task-icon { font-size: 1.25rem; margin-right: 0.75rem; }
     </style>
      <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 </head>
@@ -49,8 +50,7 @@
                     </div>
 
                 <div class="space-y-3 mb-4 h-64 overflow-y-auto pr-2" id="task-list">
-                    <p class="text-gray-400">Selecione uma sala para ver as tarefas.</p>
-                </div>
+                    </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
                     <div>
@@ -71,8 +71,7 @@
 
                 <div id="progress-log-container" class="mt-4 pt-4 border-t border-gray-700">
                     <h3 class="text-lg font-semibold mb-2">Log de Atividades</h3>
-                    <div id="progress-log" class="h-32 bg-gray-900 rounded-md p-3 text-sm font-mono overflow-y-auto">
-                        </div>
+                    <div id="progress-log" class="h-32 bg-gray-900 rounded-md p-3 text-sm font-mono overflow-y-auto"></div>
                 </div>
             </div>
         </div>
@@ -140,16 +139,15 @@
             };
 
             const renderDashboard = () => {
-                // **** VERIFICAÇÃO DE SEGURANÇA ADICIONADA AQUI ****
                 if (!appState.loginData || !appState.loginData.roomUserData || !Array.isArray(appState.loginData.roomUserData.rooms)) {
                     console.error("A resposta do login não contém os dados das salas (rooms) no formato esperado.", appState.loginData);
                     addLog("❌ Erro crítico: A resposta do servidor não incluiu a lista de salas. Tente fazer login novamente.", 'error');
-                    handleLogout(); // Desloga o usuário para evitar mais erros
+                    handleLogout();
                     return;
                 }
 
                 const { userInfo, roomUserData } = appState.loginData;
-                ui.userInfo.textContent = `Bem-vindo(a), ${userInfo.Nome}.`;
+                ui.userInfo.textContent = `Bem-vindo(a), ${userInfo.NAME}.`; // Corrigido para usar a propriedade correta
                 
                 ui.roomTabs.innerHTML = `<button data-room-id="all" class="tab-active px-4 py-2 text-sm font-medium rounded-md border-b-2">Todas</button>`;
                 roomUserData.rooms.forEach(room => {
@@ -168,19 +166,27 @@
                 renderTaskList();
             };
 
+            // **** FUNÇÃO TOTALMENTE REESCRITA PARA CORRIGIR O FILTRO ****
             const renderTaskList = () => {
                 ui.taskList.innerHTML = '';
-                const tasksToDisplay = appState.loginData.tarefas
-                    .filter(t => t.answer_status !== 'submitted')
-                    .filter(t => {
-                        if (appState.currentRoomId === 'all') return true;
-                        // A associação de tarefas a salas pode ser complexa.
-                        // Uma tarefa pode pertencer a uma sala se o target da tarefa for o ID da sala,
-                        // ou se o target da tarefa for o ID de um grupo dentro da sala.
-                        const room = appState.loginData.roomUserData.rooms.find(r => r.publication_target === appState.currentRoomId);
-                        const groupIds = room?.group_categories?.map(g => g.id) || [];
-                        return t.publication_target === appState.currentRoomId || groupIds.includes(t.publication_target);
-                    });
+                const allTasks = appState.loginData.tarefas.filter(t => t.answer_status !== 'submitted' && t.answer_status !== 'finished');
+
+                let tasksToDisplay;
+
+                if (appState.currentRoomId === 'all') {
+                    tasksToDisplay = allTasks;
+                } else {
+                    const currentRoom = appState.loginData.roomUserData.rooms.find(r => r.publication_target === appState.currentRoomId);
+                    if (!currentRoom) {
+                        tasksToDisplay = [];
+                    } else {
+                        // Cria um conjunto com todos os IDs de publicação válidos para esta sala (o ID da própria sala + IDs dos grupos)
+                        const validTargets = new Set([currentRoom.publication_target]);
+                        currentRoom.group_categories?.forEach(group => validTargets.add(String(group.id)));
+
+                        tasksToDisplay = allTasks.filter(task => validTargets.has(String(task.publication_target)));
+                    }
+                }
 
                 if (tasksToDisplay.length === 0) {
                     ui.taskList.innerHTML = '<p class="text-gray-400 p-4 text-center">Nenhuma tarefa pendente nesta sala.</p>';
@@ -192,25 +198,27 @@
                     if (task.task_expired) statusTag = '<span class="status-tag status-expirada">Expirada</span>';
                     if (task.answer_status === 'draft') statusTag = '<span class="status-tag status-rascunho">Rascunho</span>';
                     
+                    // Adiciona ícones para diferenciar o tipo de tarefa
+                    let taskIcon = '📖'; // Padrão: Tarefa Comum
+                    if (task.is_exam) taskIcon = '📝'; // Prova
+                    if (task.is_essay) taskIcon = '✍️'; // Redação
+
                     const taskElementHTML = `
                         <div class="flex items-center bg-gray-900/70 p-3 rounded-md">
-                            <input type="checkbox" class="task-checkbox h-5 w-5 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600" data-task-id="${task.id}">
-                            <label class="ml-3 flex-grow cursor-pointer" for="task-${task.id}">${task.title}</label>
+                            <input type="checkbox" class="task-checkbox h-5 w-5 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600" data-task-id="${task.id}" id="task-${task.id}">
+                            <span class="task-icon" title="${task.is_exam ? 'Prova' : task.is_essay ? 'Redação' : 'Tarefa'}">${taskIcon}</span>
+                            <label class="flex-grow cursor-pointer" for="task-${task.id}">${task.title}</label>
                             ${statusTag}
                         </div>
                     `;
                     ui.taskList.insertAdjacentHTML('beforeend', taskElementHTML);
-                     // Add an ID to the checkbox to make the label clickable
-                    const checkbox = ui.taskList.querySelector(`[data-task-id="${task.id}"]`);
-                    checkbox.id = `task-${task.id}`;
                 });
             };
 
             const handleAutomation = async (submissionStatus) => {
                 const selectedCheckboxes = Array.from(ui.taskList.querySelectorAll('.task-checkbox:checked'));
                 if (selectedCheckboxes.length === 0) {
-                    addLog("⚠️ Nenhuma tarefa selecionada.", 'warn');
-                    return;
+                    addLog("⚠️ Nenhuma tarefa selecionada.", 'warn'); return;
                 }
 
                 setButtonsDisabled(true);
@@ -220,10 +228,15 @@
                     const taskId = checkbox.dataset.taskId;
                     const taskData = appState.loginData.tarefas.find(t => t.id == taskId);
                     if (!taskData) {
-                        addLog(`❌ Erro: Não foi possível encontrar os dados da tarefa ID ${taskId}.`, 'error');
-                        continue;
+                        addLog(`❌ Erro: Não foi possível encontrar os dados da tarefa ID ${taskId}.`, 'error'); continue;
                     }
                     
+                    // Ignorar redações, pois a API de gabarito não funciona para elas
+                    if (taskData.is_essay) {
+                        addLog(`⚠️ "${taskData.title}" é uma redação e será ignorada.`, 'warn');
+                        continue;
+                    }
+
                     await processSingleTask(taskData, submissionStatus);
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -238,15 +251,14 @@
                 try {
                     addLog(`   - Buscando gabarito...`);
                     const getAnswersPayload = { 
-                        taskId: taskData.id, 
-                        tokenB: appState.tokenB, 
-                        room: taskData.publication_target 
+                        taskId: taskData.id, tokenB: appState.tokenB, room: taskData.publication_target 
                     };
                     const answersResponse = await fetch('/api/get-answers', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload)
                     });
                     const answersData = await answersResponse.json();
                     if (!answersResponse.ok) throw new Error(answersData.error || 'Falha ao buscar gabarito.');
+                    if (!answersData.answers) throw new Error('API de gabarito não retornou respostas.');
                     addLog(`   - Gabarito obtido com sucesso.`);
 
                     const minTime = parseInt(ui.minTimeInput.value) || 90;
@@ -254,10 +266,8 @@
                     const duration = Math.random() * (maxTime - minTime) + minTime;
 
                     const submitPayload = { 
-                        status: submissionStatus, 
-                        answers: answersData.answers, 
-                        accessed_on: "room", 
-                        executed_on: taskData.publication_target, 
+                        status: submissionStatus, answers: answersData.answers, 
+                        accessed_on: "room", executed_on: taskData.publication_target, 
                         duration: parseFloat(duration.toFixed(2))
                     };
                     addLog(`   - Enviando resposta (duração: ${Math.round(duration)}s)...`);
@@ -269,7 +279,6 @@
 
                     const finalMessage = submissionStatus === 'draft' ? 'Salvo como rascunho!' : `Enviado! Nota: ${submitData.result_score ?? 'N/A'}`;
                     addLog(`✔️ Sucesso para "${taskName}": ${finalMessage}`, 'success');
-
                 } catch (error) {
                     addLog(`❌ Erro em "${taskName}": ${error.message}`, 'error');
                 }
