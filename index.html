@@ -80,14 +80,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Estado global da aplicação
-            const appState = {
-                loginData: null,
-                tokenB: null,
-                currentRoomId: 'all',
-            };
-
-            // Referências de UI
+            const appState = { loginData: null, tokenB: null, currentRoomId: 'all' };
             const ui = {
                 loginView: document.getElementById('login-view'),
                 dashboardView: document.getElementById('dashboard-view'),
@@ -108,11 +101,10 @@
                 progressLog: document.getElementById('progress-log'),
             };
 
-            // --- LÓGICA DE LOGIN E LOGOUT ---
-
             const handleLogin = async (e) => {
                 e.preventDefault();
                 setLoading(true, 'Autenticando...');
+                ui.loginMessage.textContent = '';
                 try {
                     const response = await fetch('/api/login', {
                         method: 'POST',
@@ -121,65 +113,20 @@
                     });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.error || 'Erro desconhecido no login.');
-
+                    if (!data.tokenB) throw new Error("O backend não retornou o tokenB necessário.");
+                     
                     appState.loginData = data;
-                    // O token B não vem mais no objeto principal, temos que pegá-lo da troca de token que agora está no backend
-                    // Como o backend já usa o tokenB para buscar as tarefas, só precisamos dele no frontend para as requisições futuras
-                    // Assumimos que o backend não nos envia mais o tokenB, então vamos ter que adaptar.
-                    // CORREÇÃO: O seu backend é um proxy, ele precisa do tokenB que é obtido no login. Vamos assumir que você o retorne no JSON.
-                    // Se não retornar, teríamos que fazer a troca de token no frontend, o que é menos seguro.
-                    // Para este exemplo, vou simular que o tokenB foi retornado em `data.tokenB`. Você precisaria ajustar seu `login.js` para adicionar `tokenB: tokenB` ao JSON de resposta.
-                    // Mas, para fins de teste, vou usar um valor fictício e focar na UI. No seu código real, você já tem acesso a ele.
-                    // Vamos passar o tokenB para o estado da aplicação
-                    const tokenExchangeResponse = await fetchTokenBFromTokenA(data.tokenA); // Simulação
-                    appState.tokenB = data.tokenB; // ESSA É A LINHA CRÍTICA. SEU /api/login PRECISA RETORNAR O tokenB.
+                    appState.tokenB = data.tokenB;
 
                     renderDashboard();
                     ui.loginView.classList.add('hidden');
                     ui.dashboardView.classList.remove('hidden');
-
                 } catch (error) {
                     ui.loginMessage.textContent = `Erro: ${error.message}`;
                 } finally {
-                    setLoading(false);
+                    setLoading(false, 'Entrar');
                 }
             };
-            
-            // Adicionando uma função para obter o tokenB, caso seu /api/login não o retorne
-            // O IDEAL é que o /api/login retorne o tokenB. Adicione "tokenB: tokenB" ao objeto `dashboardData`.
-            const handleLoginCorrection = async (e) => {
-                 e.preventDefault();
-                 setLoading(true, 'Autenticando...');
-                 try {
-                     const response = await fetch('/api/login', {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify({ user: ui.raInput.value, senha: ui.senhaInput.value })
-                     });
-                     const data = await response.json(); // Este é o `dashboardData` do seu backend
-                     if (!response.ok) throw new Error(data.error || 'Erro desconhecido no login.');
-
-                     // O tokenB é gerado no backend, mas não é retornado. Vamos assumir que ele *é* retornado para o frontend.
-                     // Você deve ajustar seu `api/login.js` para incluir `tokenB` no JSON de resposta.
-                     // Ex: res.status(200).json({ ...dashboardData, tokenB: tokenB });
-                     if (!data.tokenB) { // Adicionando uma verificação
-                         throw new Error("O backend não retornou o tokenB necessário para as operações.");
-                     }
-                     
-                     appState.loginData = data;
-                     appState.tokenB = data.tokenB; // Armazenando o token B
-
-                     renderDashboard();
-                     ui.loginView.classList.add('hidden');
-                     ui.dashboardView.classList.remove('hidden');
-
-                 } catch (error) {
-                     ui.loginMessage.textContent = `Erro: ${error.message}`;
-                 } finally {
-                     setLoading(false);
-                 }
-            }
-
 
             const handleLogout = () => {
                 appState.loginData = null;
@@ -188,21 +135,27 @@
                 ui.senhaInput.value = '';
                 ui.dashboardView.classList.add('hidden');
                 ui.loginView.classList.remove('hidden');
+                ui.loginMessage.textContent = '';
+                ui.progressLog.innerHTML = '';
             };
 
-            // --- RENDERIZAÇÃO DO PAINEL ---
-
             const renderDashboard = () => {
+                // **** VERIFICAÇÃO DE SEGURANÇA ADICIONADA AQUI ****
+                if (!appState.loginData || !appState.loginData.roomUserData || !Array.isArray(appState.loginData.roomUserData.rooms)) {
+                    console.error("A resposta do login não contém os dados das salas (rooms) no formato esperado.", appState.loginData);
+                    addLog("❌ Erro crítico: A resposta do servidor não incluiu a lista de salas. Tente fazer login novamente.", 'error');
+                    handleLogout(); // Desloga o usuário para evitar mais erros
+                    return;
+                }
+
                 const { userInfo, roomUserData } = appState.loginData;
                 ui.userInfo.textContent = `Bem-vindo(a), ${userInfo.Nome}.`;
                 
-                // Renderizar Abas
                 ui.roomTabs.innerHTML = `<button data-room-id="all" class="tab-active px-4 py-2 text-sm font-medium rounded-md border-b-2">Todas</button>`;
                 roomUserData.rooms.forEach(room => {
                     ui.roomTabs.innerHTML += `<button data-room-id="${room.publication_target}" class="px-4 py-2 text-sm font-medium rounded-md border-b-2 border-transparent hover:bg-gray-700">${room.name}</button>`;
                 });
 
-                // Adicionar listeners nas abas
                 document.querySelectorAll('#room-tabs button').forEach(tab => {
                     tab.addEventListener('click', () => {
                         document.querySelector('#room-tabs .tab-active').classList.remove('tab-active');
@@ -221,8 +174,12 @@
                     .filter(t => t.answer_status !== 'submitted')
                     .filter(t => {
                         if (appState.currentRoomId === 'all') return true;
-                        // A lógica de associação pode ser complexa. Vamos simplificar:
-                        return t.publication_target === appState.currentRoomId;
+                        // A associação de tarefas a salas pode ser complexa.
+                        // Uma tarefa pode pertencer a uma sala se o target da tarefa for o ID da sala,
+                        // ou se o target da tarefa for o ID de um grupo dentro da sala.
+                        const room = appState.loginData.roomUserData.rooms.find(r => r.publication_target === appState.currentRoomId);
+                        const groupIds = room?.group_categories?.map(g => g.id) || [];
+                        return t.publication_target === appState.currentRoomId || groupIds.includes(t.publication_target);
                     });
 
                 if (tasksToDisplay.length === 0) {
@@ -238,16 +195,17 @@
                     const taskElementHTML = `
                         <div class="flex items-center bg-gray-900/70 p-3 rounded-md">
                             <input type="checkbox" class="task-checkbox h-5 w-5 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600" data-task-id="${task.id}">
-                            <label class="ml-3 flex-grow">${task.title}</label>
+                            <label class="ml-3 flex-grow cursor-pointer" for="task-${task.id}">${task.title}</label>
                             ${statusTag}
                         </div>
                     `;
-                    ui.taskList.innerHTML += taskElementHTML;
+                    ui.taskList.insertAdjacentHTML('beforeend', taskElementHTML);
+                     // Add an ID to the checkbox to make the label clickable
+                    const checkbox = ui.taskList.querySelector(`[data-task-id="${task.id}"]`);
+                    checkbox.id = `task-${task.id}`;
                 });
             };
 
-            // --- LÓGICA DE AUTOMAÇÃO ---
-            
             const handleAutomation = async (submissionStatus) => {
                 const selectedCheckboxes = Array.from(ui.taskList.querySelectorAll('.task-checkbox:checked'));
                 if (selectedCheckboxes.length === 0) {
@@ -267,7 +225,7 @@
                     }
                     
                     await processSingleTask(taskData, submissionStatus);
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // Pequena pausa entre tarefas
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
 
                 addLog("✅ Automação concluída.", 'success');
@@ -277,14 +235,12 @@
             const processSingleTask = async (taskData, submissionStatus) => {
                 const taskName = taskData.title;
                 addLog(`▶️ Processando: "${taskName}"`);
-
                 try {
-                    // 1. Obter o gabarito
                     addLog(`   - Buscando gabarito...`);
                     const getAnswersPayload = { 
                         taskId: taskData.id, 
                         tokenB: appState.tokenB, 
-                        room: taskData.publication_target // Usamos o publication_target da própria tarefa
+                        room: taskData.publication_target 
                     };
                     const answersResponse = await fetch('/api/get-answers', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload)
@@ -293,7 +249,6 @@
                     if (!answersResponse.ok) throw new Error(answersData.error || 'Falha ao buscar gabarito.');
                     addLog(`   - Gabarito obtido com sucesso.`);
 
-                    // 2. Submeter a tarefa
                     const minTime = parseInt(ui.minTimeInput.value) || 90;
                     const maxTime = parseInt(ui.maxTimeInput.value) || 300;
                     const duration = Math.random() * (maxTime - minTime) + minTime;
@@ -310,7 +265,7 @@
                         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: submitPayload })
                     });
                     const submitData = await submitResponse.json();
-                    if (!submitResponse.ok) throw new Error(submitData.error || 'Falha ao enviar tarefa.');
+                    if (!submitResponse.ok) throw new Error(submitData.details?.message || submitData.error || 'Falha ao enviar tarefa.');
 
                     const finalMessage = submissionStatus === 'draft' ? 'Salvo como rascunho!' : `Enviado! Nota: ${submitData.result_score ?? 'N/A'}`;
                     addLog(`✔️ Sucesso para "${taskName}": ${finalMessage}`, 'success');
@@ -319,8 +274,6 @@
                     addLog(`❌ Erro em "${taskName}": ${error.message}`, 'error');
                 }
             };
-
-            // --- FUNÇÕES UTILITÁRIAS ---
 
             const setLoading = (isLoading, message = 'Entrar') => {
                 ui.loginButton.disabled = isLoading;
@@ -334,20 +287,17 @@
 
             const addLog = (message, type = 'info') => {
                 const colors = {
-                    info: 'text-gray-300',
-                    success: 'text-green-400',
-                    warn: 'text-yellow-400',
-                    error: 'text-red-400',
+                    info: 'text-gray-300', success: 'text-green-400',
+                    warn: 'text-yellow-400', error: 'text-red-400',
                 };
                 const logEntry = document.createElement('p');
                 logEntry.className = `log-entry ${colors[type]}`;
                 logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
                 ui.progressLog.appendChild(logEntry);
-                ui.progressLog.scrollTop = ui.progressLog.scrollHeight; // Auto-scroll
+                ui.progressLog.scrollTop = ui.progressLog.scrollHeight;
             };
 
-            // --- EVENT LISTENERS ---
-            ui.loginForm.addEventListener('submit', handleLoginCorrection);
+            ui.loginForm.addEventListener('submit', handleLogin);
             ui.logoutButton.addEventListener('click', handleLogout);
             ui.submitBtn.addEventListener('click', () => handleAutomation('submitted'));
             ui.draftBtn.addEventListener('click', () => handleAutomation('draft'));
@@ -359,4 +309,5 @@
         });
     </script>
 </body>
-</html>
+    </html>
+    
