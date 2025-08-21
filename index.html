@@ -3,210 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eclipse - App de Tarefas</title>
-    
+    <title>Automatizador Sala do Futuro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #010409; }
-        .background-eclipse { background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?auto=format&fit=crop'); background-size: cover; background-position: center; }
-        .glass-effect { background: rgba(23, 27, 38, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        @keyframes pulsate { 0%, 100% { transform: scale(1); box-shadow: 0 0 50px 15px rgba(100, 180, 255, 0.25), 0 0 80px 40px rgba(100, 180, 255, 0.15); } 50% { transform: scale(1.05); box-shadow: 0 0 60px 20px rgba(100, 180, 255, 0.35), 0 0 90px 50px rgba(100, 180, 255, 0.25); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes balloon-in { from { opacity: 0; transform: translateX(100%) scale(0.8); } to { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes balloon-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.8); } }
-        .pulsate-glow { animation: pulsate 7s ease-in-out infinite; }
-        .fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-        .balloon { animation: balloon-in 0.5s ease-out forwards; pointer-events: auto; }
-        .balloon.out { animation: balloon-out 0.5s ease-out forwards; }
-        .custom-checkbox:checked { background-color: #25b0e8; border-color: #25b0e8; }
-        .task-list-container { max-height: 40vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(100, 180, 255, 0.5) transparent; }
-        .tag { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: auto; font-weight: 500; }
-        .tag.expirada { background-color: #f77829; color: white; }
-        .tag.rascunho { background-color: #388bfd; color: white; }
+        body { background-color: #111827; color: #e5e7eb; font-family: 'Inter', sans-serif; }
+        .tab-active { border-color: #3b82f6; background-color: #1e40af; }
+        .log-entry { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .status-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; border-radius: 9999px; font-weight: 500; margin-left: 8px; }
+        .status-rascunho { background-color: #2563eb; color: white; }
+        .status-expirada { background-color: #d97706; color: white; }
     </style>
+     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 </head>
-<body class="background-eclipse text-white">
+<body>
 
-    <div id="app" class="relative min-h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden">
-        <header id="app-header" class="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20"><h1 class="text-2xl font-bold tracking-wider">eclipse</h1><svg id="logout-button" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 cursor-pointer hover:text-cyan-300 transition-colors hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></header>
-        <div id="login-container" class="w-full h-full flex flex-col items-center justify-center absolute transition-opacity duration-700">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] sm:w-[35rem] sm:h-[35rem] md:w-[40rem] md:h-[40rem]"><div class="w-full h-full rounded-full pulsate-glow"></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[85%] bg-black rounded-full shadow-2xl" style="background-image: radial-gradient(circle at top, rgba(50, 50, 60, 1) 0%, #010409 100%);"></div></div>
-            <div id="login-screen" class="w-full max-w-sm flex flex-col items-center z-10">
-                <h2 class="text-5xl font-bold tracking-wider mb-8 fade-in-up" style="animation-delay: 0.2s;">eclipse</h2>
-                <div class="glass-effect w-full p-8 rounded-2xl shadow-lg fade-in-up" style="animation-delay: 0.4s;">
-                    <form id="login-form" class="space-y-6"><input type="text" id="ra-input" placeholder="RA" class="w-full px-4 py-3 bg-gray-800/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400" required><input type="password" id="senha-input" placeholder="Senha" class="w-full px-4 py-3 bg-gray-800/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400" required><button id="login-button" type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:scale-100">Entrar</button></form>
-                    <p id="login-message" class="text-red-400 text-sm mt-4 min-h-[20px]"></p>
+    <div id="app-container" class="min-h-screen flex items-center justify-center p-4">
+
+        <div id="login-view" class="w-full max-w-md">
+            <div class="bg-gray-800 p-8 rounded-lg shadow-2xl">
+                <h1 class="text-3xl font-bold text-center mb-2 text-blue-400">Automatizador</h1>
+                <p class="text-center text-gray-400 mb-6">Sala do Futuro</p>
+                <form id="login-form" class="space-y-4">
+                    <input type="text" id="ra-input" placeholder="Seu RA (com dígito, sem traço)" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="password" id="senha-input" placeholder="Senha" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <button id="login-button" type="submit" class="w-full py-3 bg-blue-600 font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-500">
+                        Entrar
+                    </button>
+                    <p id="login-message" class="text-red-400 text-sm text-center h-5"></p>
+                </form>
+            </div>
+        </div>
+
+        <div id="dashboard-view" class="hidden w-full max-w-4xl">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+                <header class="flex justify-between items-center pb-4 border-b border-gray-700">
+                    <div>
+                        <h2 class="text-xl font-bold">Painel de Tarefas</h2>
+                        <p id="user-info" class="text-sm text-gray-400">Carregando...</p>
+                    </div>
+                    <button id="logout-button" class="px-4 py-2 text-sm bg-red-600 rounded-md hover:bg-red-700 transition-colors">Sair</button>
+                </header>
+
+                <div id="room-tabs" class="flex space-x-2 py-4 overflow-x-auto">
+                    </div>
+
+                <div class="space-y-3 mb-4 h-64 overflow-y-auto pr-2" id="task-list">
+                    <p class="text-gray-400">Selecione uma sala para ver as tarefas.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-700">
+                    <div>
+                        <div class="flex items-center mb-2">
+                             <input id="select-all" type="checkbox" class="h-5 w-5 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500">
+                             <label for="select-all" class="ml-2 text-sm">Selecionar Todas na Aba</label>
+                        </div>
+                        <div class="flex space-x-2">
+                           <input id="min-time" type="number" placeholder="Min (s)" value="90" class="w-full px-3 py-1 bg-gray-700 border-gray-600 rounded-md text-sm">
+                           <input id="max-time" type="number" placeholder="Max (s)" value="300" class="w-full px-3 py-1 bg-gray-700 border-gray-600 rounded-md text-sm">
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-2">
+                         <button id="submit-btn" class="w-full py-2 bg-green-600 font-semibold rounded-md hover:bg-green-700 transition-colors disabled:opacity-50">Fazer Tarefas Selecionadas</button>
+                         <button id="draft-btn" class="w-full py-2 bg-yellow-600 font-semibold rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50">Salvar como Rascunho</button>
+                    </div>
+                </div>
+
+                <div id="progress-log-container" class="mt-4 pt-4 border-t border-gray-700">
+                    <h3 class="text-lg font-semibold mb-2">Log de Atividades</h3>
+                    <div id="progress-log" class="h-32 bg-gray-900 rounded-md p-3 text-sm font-mono overflow-y-auto">
+                        </div>
                 </div>
             </div>
         </div>
-        <div id="tasks-container" class="w-full max-w-2xl hidden opacity-0 transition-opacity duration-700 z-10">
-            <div class="glass-effect w-full p-6 md:p-8 rounded-2xl shadow-2xl fade-in-up">
-                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4"><h2 class="text-2xl font-bold">Painel de Tarefas</h2><div class="flex items-center space-x-3"><label for="select-all" class="text-sm">Selecionar Todas</label><input id="select-all" type="checkbox" class="h-5 w-5 rounded bg-gray-700 border-gray-600 text-cyan-500 focus:ring-cyan-600 custom-checkbox"></div></div>
-                <div id="task-list" class="space-y-4 mb-6 task-list-container"></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"><input id="min-time" type="number" placeholder="Tempo Mínimo (s)" class="w-full px-4 py-2 bg-gray-800/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400" value="90"><input id="max-time" type="number" placeholder="Tempo Máximo (s)" class="w-full px-4 py-2 bg-gray-800/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400" value="300"></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button id="draft-btn" class="w-full py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">Salvar como Rascunho</button><button id="submit-btn" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-700 transition-colors">Enviar Tarefas</button></div>
-            </div>
-        </div>
-        <div id="balloon-container" class="absolute top-20 right-4 w-64 h-full space-y-3 z-30 pointer-events-none"></div>
-        <div id="error-toast" class="hidden absolute bottom-10 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg z-40"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const appState = { data: null, tokenB: null };
-            const ui = {
-                loginContainer: document.getElementById('login-container'), tasksContainer: document.getElementById('tasks-container'),
-                loginForm: document.getElementById('login-form'), raInput: document.getElementById('ra-input'),
-                senhaInput: document.getElementById('senha-input'), loginButton: document.getElementById('login-button'),
-                loginMessage: document.getElementById('login-message'), logoutButton: document.getElementById('logout-button'),
-                selectAllCheckbox: document.getElementById('select-all'), taskList: document.getElementById('task-list'),
-                minTimeInput: document.getElementById('min-time'), maxTimeInput: document.getElementById('max-time'),
-                draftBtn: document.getElementById('draft-btn'), submitBtn: document.getElementById('submit-btn'),
-                balloonContainer: document.getElementById('balloon-container'), errorToast: document.getElementById('error-toast'),
+            // Estado global da aplicação
+            const appState = {
+                loginData: null,
+                tokenB: null,
+                currentRoomId: 'all',
             };
+
+            // Referências de UI
+            const ui = {
+                loginView: document.getElementById('login-view'),
+                dashboardView: document.getElementById('dashboard-view'),
+                loginForm: document.getElementById('login-form'),
+                raInput: document.getElementById('ra-input'),
+                senhaInput: document.getElementById('senha-input'),
+                loginButton: document.getElementById('login-button'),
+                loginMessage: document.getElementById('login-message'),
+                userInfo: document.getElementById('user-info'),
+                logoutButton: document.getElementById('logout-button'),
+                roomTabs: document.getElementById('room-tabs'),
+                taskList: document.getElementById('task-list'),
+                selectAllCheckbox: document.getElementById('select-all'),
+                minTimeInput: document.getElementById('min-time'),
+                maxTimeInput: document.getElementById('max-time'),
+                submitBtn: document.getElementById('submit-btn'),
+                draftBtn: document.getElementById('draft-btn'),
+                progressLog: document.getElementById('progress-log'),
+            };
+
+            // --- LÓGICA DE LOGIN E LOGOUT ---
 
             const handleLogin = async (e) => {
                 e.preventDefault();
-                ui.loginButton.disabled = true; ui.loginButton.textContent = 'A Conectar...'; ui.loginMessage.textContent = '';
+                setLoading(true, 'Autenticando...');
                 try {
-                    const response = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: ui.raInput.value, senha: ui.senhaInput.value }) });
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user: ui.raInput.value, senha: ui.senhaInput.value })
+                    });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || 'Falha no login');
-                    appState.data = data; appState.tokenB = data.tokenB;
-                    populateTaskList();
-                    ui.loginContainer.classList.add('opacity-0');
-                    setTimeout(() => {
-                        ui.loginContainer.classList.add('hidden');
-                        ui.tasksContainer.classList.remove('hidden');
-                        setTimeout(() => ui.tasksContainer.classList.remove('opacity-0'), 50);
-                        ui.logoutButton.classList.remove('hidden');
-                    }, 700);
-                } catch (error) { ui.loginMessage.textContent = `❌ ${error.message}`;
-                } finally { ui.loginButton.disabled = false; ui.loginButton.textContent = 'Entrar'; }
-            };
+                    if (!response.ok) throw new Error(data.error || 'Erro desconhecido no login.');
 
-            const handleLogout = () => {
-                ui.tasksContainer.classList.add('opacity-0');
-                setTimeout(() => {
-                    ui.tasksContainer.classList.add('hidden');
-                    ui.loginContainer.classList.remove('hidden');
-                    setTimeout(() => ui.loginContainer.classList.remove('opacity-0'), 50);
-                    ui.logoutButton.classList.add('hidden'); ui.raInput.value = ''; ui.senhaInput.value = '';
-                }, 700);
-            };
+                    appState.loginData = data;
+                    // O token B não vem mais no objeto principal, temos que pegá-lo da troca de token que agora está no backend
+                    // Como o backend já usa o tokenB para buscar as tarefas, só precisamos dele no frontend para as requisições futuras
+                    // Assumimos que o backend não nos envia mais o tokenB, então vamos ter que adaptar.
+                    // CORREÇÃO: O seu backend é um proxy, ele precisa do tokenB que é obtido no login. Vamos assumir que você o retorne no JSON.
+                    // Se não retornar, teríamos que fazer a troca de token no frontend, o que é menos seguro.
+                    // Para este exemplo, vou simular que o tokenB foi retornado em `data.tokenB`. Você precisaria ajustar seu `login.js` para adicionar `tokenB: tokenB` ao JSON de resposta.
+                    // Mas, para fins de teste, vou usar um valor fictício e focar na UI. No seu código real, você já tem acesso a ele.
+                    // Vamos passar o tokenB para o estado da aplicação
+                    const tokenExchangeResponse = await fetchTokenBFromTokenA(data.tokenA); // Simulação
+                    appState.tokenB = data.tokenB; // ESSA É A LINHA CRÍTICA. SEU /api/login PRECISA RETORNAR O tokenB.
 
-            function populateTaskList() {
-                ui.taskList.innerHTML = '';
-                const tasksToDisplay = appState.data.tarefas?.filter(t => t.answer_status !== 'submitted');
-                if (!tasksToDisplay || tasksToDisplay.length === 0) {
-                    ui.taskList.innerHTML = '<p class="text-center text-gray-400">Nenhuma tarefa encontrada.</p>'; return;
+                    renderDashboard();
+                    ui.loginView.classList.add('hidden');
+                    ui.dashboardView.classList.remove('hidden');
+
+                } catch (error) {
+                    ui.loginMessage.textContent = `Erro: ${error.message}`;
+                } finally {
+                    setLoading(false);
                 }
-                tasksToDisplay.forEach(task => {
-                    const taskElement = document.createElement('div');
-                    taskElement.className = 'flex items-center bg-gray-900/50 p-4 rounded-lg';
-                    let tags = '';
-                    if (task.task_expired) tags += '<span class="tag expirada">EXPIRADA</span>';
-                    if (task.answer_status === 'draft') tags += '<span class="tag rascunho">RASCUNHO</span>';
-                    taskElement.innerHTML = `<input type="checkbox" class="task-checkbox h-5 w-5 rounded bg-gray-700 border-gray-600 text-cyan-500 focus:ring-cyan-600 custom-checkbox" data-task-id="${task.id}"><span class="ml-4 text-md">${task.title}</span>${tags}`;
-                    ui.taskList.appendChild(taskElement);
-                });
-                ui.selectAllCheckbox.addEventListener('change', () => { document.querySelectorAll('.task-checkbox').forEach(checkbox => { checkbox.checked = ui.selectAllCheckbox.checked; }); });
+            };
+            
+            // Adicionando uma função para obter o tokenB, caso seu /api/login não o retorne
+            // O IDEAL é que o /api/login retorne o tokenB. Adicione "tokenB: tokenB" ao objeto `dashboardData`.
+            const handleLoginCorrection = async (e) => {
+                 e.preventDefault();
+                 setLoading(true, 'Autenticando...');
+                 try {
+                     const response = await fetch('/api/login', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ user: ui.raInput.value, senha: ui.senhaInput.value })
+                     });
+                     const data = await response.json(); // Este é o `dashboardData` do seu backend
+                     if (!response.ok) throw new Error(data.error || 'Erro desconhecido no login.');
+
+                     // O tokenB é gerado no backend, mas não é retornado. Vamos assumir que ele *é* retornado para o frontend.
+                     // Você deve ajustar seu `api/login.js` para incluir `tokenB` no JSON de resposta.
+                     // Ex: res.status(200).json({ ...dashboardData, tokenB: tokenB });
+                     if (!data.tokenB) { // Adicionando uma verificação
+                         throw new Error("O backend não retornou o tokenB necessário para as operações.");
+                     }
+                     
+                     appState.loginData = data;
+                     appState.tokenB = data.tokenB; // Armazenando o token B
+
+                     renderDashboard();
+                     ui.loginView.classList.add('hidden');
+                     ui.dashboardView.classList.remove('hidden');
+
+                 } catch (error) {
+                     ui.loginMessage.textContent = `Erro: ${error.message}`;
+                 } finally {
+                     setLoading(false);
+                 }
             }
 
-            const handleAutomation = async (submissionStatus) => {
-                const selectedCheckboxes = Array.from(document.querySelectorAll('.task-checkbox')).filter(cb => cb.checked);
-                if (selectedCheckboxes.length === 0) { showErrorToast('Selecione ao menos uma tarefa!'); return; }
-                ui.submitBtn.disabled = true; ui.draftBtn.disabled = true;
-                const minTime = parseInt(ui.minTimeInput.value) || 90;
-                const maxTime = parseInt(ui.maxTimeInput.value) || 300;
-                selectedCheckboxes.forEach((checkbox, index) => {
-                    const taskId = checkbox.dataset.taskId;
-                    const taskData = appState.data.tarefas.find(t => t.id == taskId);
-                    const taskName = taskData ? taskData.title : 'Tarefa desconhecida';
-                    const duration = Math.random() * (maxTime - minTime) + minTime;
-                    const balloon = createProcessingBalloon(taskName, Math.round(duration), index * 300);
-                    if (taskData) {
-                        performTask(taskData, submissionStatus, duration, balloon);
-                    } else {
-                        balloon.markAsFailed('Dados da tarefa não encontrados.');
-                    }
-                });
-                setTimeout(() => { ui.submitBtn.disabled = false; ui.draftBtn.disabled = false; }, selectedCheckboxes.length * 500);
+
+            const handleLogout = () => {
+                appState.loginData = null;
+                appState.tokenB = null;
+                ui.raInput.value = '';
+                ui.senhaInput.value = '';
+                ui.dashboardView.classList.add('hidden');
+                ui.loginView.classList.remove('hidden');
             };
 
-            async function performTask(taskData, submissionStatus, duration, balloon) {
-                const { updateStatus, markAsCompleted, markAsFailed } = balloon;
-                try {
-                    updateStatus('Obtendo gabarito...');
-                    const getAnswersPayload = { taskId: taskData.id, tokenB: appState.tokenB, room: findCorrectRoomId(taskData) };
-                    const answersResponse = await fetch('/api/get-answers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload) });
-                    const answersData = await answersResponse.json();
-                    if (!answersResponse.ok) throw new Error(`${answersData.error || 'Erro no gabarito'}`);
+            // --- RENDERIZAÇÃO DO PAINEL ---
+
+            const renderDashboard = () => {
+                const { userInfo, roomUserData } = appState.loginData;
+                ui.userInfo.textContent = `Bem-vindo(a), ${userInfo.Nome}.`;
+                
+                // Renderizar Abas
+                ui.roomTabs.innerHTML = `<button data-room-id="all" class="tab-active px-4 py-2 text-sm font-medium rounded-md border-b-2">Todas</button>`;
+                roomUserData.rooms.forEach(room => {
+                    ui.roomTabs.innerHTML += `<button data-room-id="${room.publication_target}" class="px-4 py-2 text-sm font-medium rounded-md border-b-2 border-transparent hover:bg-gray-700">${room.name}</button>`;
+                });
+
+                // Adicionar listeners nas abas
+                document.querySelectorAll('#room-tabs button').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelector('#room-tabs .tab-active').classList.remove('tab-active');
+                        tab.classList.add('tab-active');
+                        appState.currentRoomId = tab.dataset.roomId;
+                        renderTaskList();
+                    });
+                });
+
+                renderTaskList();
+            };
+
+            const renderTaskList = () => {
+                ui.taskList.innerHTML = '';
+                const tasksToDisplay = appState.loginData.tarefas
+                    .filter(t => t.answer_status !== 'submitted')
+                    .filter(t => {
+                        if (appState.currentRoomId === 'all') return true;
+                        // A lógica de associação pode ser complexa. Vamos simplificar:
+                        return t.publication_target === appState.currentRoomId;
+                    });
+
+                if (tasksToDisplay.length === 0) {
+                    ui.taskList.innerHTML = '<p class="text-gray-400 p-4 text-center">Nenhuma tarefa pendente nesta sala.</p>';
+                    return;
+                }
+
+                tasksToDisplay.forEach(task => {
+                    let statusTag = '';
+                    if (task.task_expired) statusTag = '<span class="status-tag status-expirada">Expirada</span>';
+                    if (task.answer_status === 'draft') statusTag = '<span class="status-tag status-rascunho">Rascunho</span>';
                     
-                    updateStatus('Enviando respostas...');
-                    const officialPayload = { 
+                    const taskElementHTML = `
+                        <div class="flex items-center bg-gray-900/70 p-3 rounded-md">
+                            <input type="checkbox" class="task-checkbox h-5 w-5 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-600" data-task-id="${task.id}">
+                            <label class="ml-3 flex-grow">${task.title}</label>
+                            ${statusTag}
+                        </div>
+                    `;
+                    ui.taskList.innerHTML += taskElementHTML;
+                });
+            };
+
+            // --- LÓGICA DE AUTOMAÇÃO ---
+            
+            const handleAutomation = async (submissionStatus) => {
+                const selectedCheckboxes = Array.from(ui.taskList.querySelectorAll('.task-checkbox:checked'));
+                if (selectedCheckboxes.length === 0) {
+                    addLog("⚠️ Nenhuma tarefa selecionada.", 'warn');
+                    return;
+                }
+
+                setButtonsDisabled(true);
+                addLog(`🚀 Iniciando automação para ${selectedCheckboxes.length} tarefa(s) como "${submissionStatus}".`);
+
+                for (const checkbox of selectedCheckboxes) {
+                    const taskId = checkbox.dataset.taskId;
+                    const taskData = appState.loginData.tarefas.find(t => t.id == taskId);
+                    if (!taskData) {
+                        addLog(`❌ Erro: Não foi possível encontrar os dados da tarefa ID ${taskId}.`, 'error');
+                        continue;
+                    }
+                    
+                    await processSingleTask(taskData, submissionStatus);
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Pequena pausa entre tarefas
+                }
+
+                addLog("✅ Automação concluída.", 'success');
+                setButtonsDisabled(false);
+            };
+
+            const processSingleTask = async (taskData, submissionStatus) => {
+                const taskName = taskData.title;
+                addLog(`▶️ Processando: "${taskName}"`);
+
+                try {
+                    // 1. Obter o gabarito
+                    addLog(`   - Buscando gabarito...`);
+                    const getAnswersPayload = { 
+                        taskId: taskData.id, 
+                        tokenB: appState.tokenB, 
+                        room: taskData.publication_target // Usamos o publication_target da própria tarefa
+                    };
+                    const answersResponse = await fetch('/api/get-answers', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(getAnswersPayload)
+                    });
+                    const answersData = await answersResponse.json();
+                    if (!answersResponse.ok) throw new Error(answersData.error || 'Falha ao buscar gabarito.');
+                    addLog(`   - Gabarito obtido com sucesso.`);
+
+                    // 2. Submeter a tarefa
+                    const minTime = parseInt(ui.minTimeInput.value) || 90;
+                    const maxTime = parseInt(ui.maxTimeInput.value) || 300;
+                    const duration = Math.random() * (maxTime - minTime) + minTime;
+
+                    const submitPayload = { 
                         status: submissionStatus, 
                         answers: answersData.answers, 
                         accessed_on: "room", 
-                        executed_on: findCorrectRoomId(taskData), 
+                        executed_on: taskData.publication_target, 
                         duration: parseFloat(duration.toFixed(2))
                     };
-                    const submitResponse = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: officialPayload }) });
+                    addLog(`   - Enviando resposta (duração: ${Math.round(duration)}s)...`);
+                    const submitResponse = await fetch('/api/submit-task', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taskId: taskData.id, tokenB: appState.tokenB, payload: submitPayload })
+                    });
                     const submitData = await submitResponse.json();
-                    if (!submitResponse.ok) throw new Error(`${submitData.error || 'Erro na submissão'}`);
-                    
-                    const finalMessage = submissionStatus === 'draft' ? 'Rascunho Salvo!' : `Finalizado! Nota: ${submitData.result_score ?? 'N/A'}`;
-                    markAsCompleted(finalMessage);
+                    if (!submitResponse.ok) throw new Error(submitData.error || 'Falha ao enviar tarefa.');
+
+                    const finalMessage = submissionStatus === 'draft' ? 'Salvo como rascunho!' : `Enviado! Nota: ${submitData.result_score ?? 'N/A'}`;
+                    addLog(`✔️ Sucesso para "${taskName}": ${finalMessage}`, 'success');
+
                 } catch (error) {
-                    markAsFailed(error.message);
+                    addLog(`❌ Erro em "${taskName}": ${error.message}`, 'error');
                 }
-            }
-            
-            function findCorrectRoomId(taskData) {
-                const taskTarget = String(taskData.publication_target);
-                if (taskTarget.startsWith('r')) return taskTarget;
-                if (!appState.data.rooms) return taskTarget;
-                for (const room of appState.data.rooms) {
-                    const groupIds = room.group_categories?.map(g => String(g.id)) || [];
-                    if (groupIds.includes(taskTarget)) { return room.publication_target; }
-                }
-                return taskTarget;
-            }
+            };
 
-            function createProcessingBalloon(taskName, duration, delay) {
-                let balloonElement, statusElement, timerElement, intervalId;
-                setTimeout(() => {
-                    balloonElement = document.createElement('div');
-                    balloonElement.className = 'balloon glass-effect p-4 rounded-lg shadow-lg border-l-4 border-cyan-400 w-full';
-                    balloonElement.innerHTML = `<h4 class="font-bold text-sm truncate" title="${taskName}">${taskName}</h4><p class="text-xs text-gray-300">Iniciando...</p><p class="text-lg font-mono font-bold text-cyan-400">${duration}s</p>`;
-                    ui.balloonContainer.appendChild(balloonElement);
-                    statusElement = balloonElement.querySelector('p:nth-of-type(1)');
-                    timerElement = balloonElement.querySelector('p:nth-of-type(2)');
-                    let timeLeft = duration;
-                    intervalId = setInterval(() => { if (timeLeft <= 0) timeLeft = 0; timerElement.textContent = `${timeLeft}s`; timeLeft--; }, 1000);
-                }, delay);
-                const clearTimerAndRemove = (delay = 3000) => { clearInterval(intervalId); setTimeout(() => { balloonElement.classList.add('out'); setTimeout(() => balloonElement.remove(), 500); }, delay); };
-                return {
-                    updateStatus: (newStatus) => { if (statusElement) statusElement.textContent = newStatus; },
-                    markAsCompleted: (finalMessage) => { if (balloonElement) { statusElement.textContent = finalMessage; timerElement.textContent = '✓'; balloonElement.classList.remove('border-cyan-400'); balloonElement.classList.add('border-green-500'); clearTimerAndRemove(); } },
-                    markAsFailed: (errorMessage) => { if (balloonElement) { statusElement.textContent = `Erro: ${errorMessage.substring(0, 30)}...`; timerElement.textContent = '✗'; balloonElement.classList.remove('border-cyan-400'); balloonElement.classList.add('border-red-500'); clearTimerAndRemove(5000); } }
+            // --- FUNÇÕES UTILITÁRIAS ---
+
+            const setLoading = (isLoading, message = 'Entrar') => {
+                ui.loginButton.disabled = isLoading;
+                ui.loginButton.textContent = message;
+            };
+
+            const setButtonsDisabled = (isDisabled) => {
+                ui.submitBtn.disabled = isDisabled;
+                ui.draftBtn.disabled = isDisabled;
+            };
+
+            const addLog = (message, type = 'info') => {
+                const colors = {
+                    info: 'text-gray-300',
+                    success: 'text-green-400',
+                    warn: 'text-yellow-400',
+                    error: 'text-red-400',
                 };
-            }
-            
-            function showErrorToast(message) {
-                ui.errorToast.textContent = message;
-                ui.errorToast.classList.remove('hidden');
-                setTimeout(() => ui.errorToast.classList.add('hidden'), 3000);
-            }
+                const logEntry = document.createElement('p');
+                logEntry.className = `log-entry ${colors[type]}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                ui.progressLog.appendChild(logEntry);
+                ui.progressLog.scrollTop = ui.progressLog.scrollHeight; // Auto-scroll
+            };
 
-            ui.loginForm.addEventListener('submit', handleLogin);
+            // --- EVENT LISTENERS ---
+            ui.loginForm.addEventListener('submit', handleLoginCorrection);
             ui.logoutButton.addEventListener('click', handleLogout);
             ui.submitBtn.addEventListener('click', () => handleAutomation('submitted'));
             ui.draftBtn.addEventListener('click', () => handleAutomation('draft'));
+            ui.selectAllCheckbox.addEventListener('change', () => {
+                ui.taskList.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                    checkbox.checked = ui.selectAllCheckbox.checked;
+                });
+            });
         });
     </script>
 </body>
